@@ -1,11 +1,54 @@
 "use client";
 
+import { formatearNumero } from "@/lib/formato";
+import { CLASE_BOTON_PRIMARIO } from "../_lib/clases";
 import { ETIQUETA_SUMINISTRO } from "../_lib/constantes";
+import type { FuenteCercana } from "../_lib/tipos";
 import { useFuentesCercanas } from "../_lib/useFuentesCercanas";
+import { IconoTelefono } from "./iconos";
 
 function telefonoHref(telefono: string): string {
   const digits = telefono.replace(/[^\d+]/g, "");
   return `tel:${digits}`;
+}
+
+function TarjetaFuente({
+  fuente,
+  destacada,
+}: {
+  fuente: FuenteCercana;
+  destacada: boolean;
+}) {
+  return (
+    <li
+      className={`rounded-2xl border border-pila bg-papel p-4 ${
+        destacada ? "border-l-4 border-l-pila" : ""
+      }`}
+    >
+      <p className={destacada ? "text-2xl font-semibold text-pozo" : "text-lg font-semibold text-pozo"}>
+        {fuente.nombreLugar}
+      </p>
+      <p className="mt-1 text-sm text-foreground/70">
+        {fuente.tiposSuministro.map((tipo) => ETIQUETA_SUMINISTRO[tipo]).join(" · ")}
+        {" · "}
+        {fuente.tieneTransporte ? "Con transporte" : "Sin transporte"}
+      </p>
+      <p className="mt-1 font-mono text-sm text-pozo">
+        {formatearNumero(fuente.distanciaKm, {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
+        })}{" "}
+        km
+        {" · "}
+        {fuente.contactoTelefono}
+      </p>
+      {/* Boton no acepta `as`; copiamos el primario hasta que Vía 3 lo agregue. */}
+      <a href={telefonoHref(fuente.contactoTelefono)} className={`mt-3 ${CLASE_BOTON_PRIMARIO}`}>
+        <IconoTelefono />
+        Llamar {fuente.contactoTelefono}
+      </a>
+    </li>
+  );
 }
 
 interface FuentesCercanasProps {
@@ -17,47 +60,48 @@ export function FuentesCercanas({ lat, lng }: FuentesCercanasProps) {
   const { fuentes, error } = useFuentesCercanas(lat, lng);
 
   if (fuentes === undefined) {
-    return <p className="text-base text-zinc-600 dark:text-zinc-400">Buscando fuentes cercanas…</p>;
+    return (
+      <div className="flex flex-col gap-3" aria-busy="true" role="status">
+        <div className="min-h-40 animate-pulse rounded-2xl bg-pila motion-reduce:animate-none" />
+        <div className="min-h-28 animate-pulse rounded-2xl bg-pila motion-reduce:animate-none" />
+        <p className="sr-only">Buscando fuentes cercanas…</p>
+      </div>
+    );
   }
 
   if (fuentes.length === 0) {
     return (
-      <p className="text-base text-zinc-700 dark:text-zinc-300">
-        No encontramos fuentes de suministro cerca de ese punto todavía.
-      </p>
+      <div className="rounded-2xl border border-pila bg-papel p-4">
+        <p className="text-base text-foreground">
+          No hay fuentes cerca de ese punto todavía. Volvé al formulario o llamá a tu alcaldía.
+        </p>
+      </div>
     );
   }
+
+  const [primera, ...resto] = fuentes;
 
   return (
     <div className="flex flex-col gap-3">
       {error ? (
-        <p className="text-sm text-amber-800 dark:text-amber-300">
+        <p className="text-sm text-aviso" role="status">
           No se pudo consultar el servidor. Mostramos fuentes de referencia.
         </p>
       ) : null}
       <ul className="flex flex-col gap-3">
-        {fuentes.map((fuente) => (
-          <li
+        {primera ? (
+          <TarjetaFuente
+            key={`${primera.nombreLugar}-${primera.contactoTelefono}`}
+            fuente={primera}
+            destacada
+          />
+        ) : null}
+        {resto.map((fuente) => (
+          <TarjetaFuente
             key={`${fuente.nombreLugar}-${fuente.contactoTelefono}`}
-            className="rounded-2xl border border-sky-200 bg-white p-4 dark:border-sky-900 dark:bg-zinc-950"
-          >
-            <p className="text-lg font-semibold text-sky-950 dark:text-sky-50">
-              {fuente.nombreLugar}
-            </p>
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-              {fuente.tiposSuministro.map((t) => ETIQUETA_SUMINISTRO[t]).join(" · ")}
-              {" · "}
-              {fuente.tieneTransporte ? "Con transporte" : "Sin transporte"}
-              {" · "}
-              {fuente.distanciaKm.toFixed(1)} km
-            </p>
-            <a
-              href={telefonoHref(fuente.contactoTelefono)}
-              className="mt-3 inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl bg-sky-800 px-4 text-base font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 dark:bg-sky-600"
-            >
-              Llamar {fuente.contactoTelefono}
-            </a>
-          </li>
+            fuente={fuente}
+            destacada={false}
+          />
         ))}
       </ul>
     </div>

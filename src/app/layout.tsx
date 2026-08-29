@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     template: "%s · aguaSOS",
   },
   description:
-    "Reporta emergencias de agua, consulta alertas de tu comunidad y da seguimiento a tu caso.",
+    "Reporta la escasez de agua y encuentra las fuentes de suministro más cercanas.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -30,6 +30,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <link rel="preconnect" href="https://tiles.openfreemap.org" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://tiles.openfreemap.org" />
+      </head>
       <body className="h-full bg-background font-sans text-foreground">
         <ClerkGate>
           <ConvexClientProvider>

@@ -4,14 +4,13 @@ import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { precargarCartografia } from "@/components/mapa/precargar";
 
 const NAV = [
   { href: "/", label: "Inicio" },
   { href: "/mapa", label: "Mapa" },
   { href: "/reportar", label: "Reportar" },
-  { href: "/alertas", label: "Alertas" },
   { href: "/recursos", label: "Recursos" },
-  { href: "/seguimiento", label: "Seguimiento" },
 ];
 
 const clerkEnabled = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
@@ -39,6 +38,8 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
+                onMouseEnter={item.href === "/mapa" ? precargarCartografia : undefined}
+                onFocus={item.href === "/mapa" ? precargarCartografia : undefined}
                 className={`rounded-full px-3 py-2 text-sm font-medium transition ${
                   active
                     ? "bg-sky-100 text-sky-900"
@@ -79,7 +80,7 @@ export function Header() {
               href="/reportar"
               className="rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700"
             >
-              Pedir ayuda
+              Reportar
             </Link>
           </div>
         </nav>
@@ -105,6 +106,7 @@ export function Header() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
+                onTouchStart={item.href === "/mapa" ? precargarCartografia : undefined}
                 className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-sky-50"
               >
                 {item.label}
@@ -144,7 +146,7 @@ export function Header() {
               onClick={() => setOpen(false)}
               className="mt-1 rounded-lg bg-rose-600 px-3 py-2 text-center text-sm font-semibold text-white"
             >
-              Pedir ayuda
+              Reportar
             </Link>
           </div>
         </nav>

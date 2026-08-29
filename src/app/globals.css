@@ -3,11 +3,23 @@
 :root {
   --background: #f4faff;
   --foreground: #0f172a;
+  --pozo: #0c4a6e;
+  --chorro: #0369a1;
+  --pila: #e0f2fe;
+  --papel: #ffffff;
+  --sequia: #e11d48;
+  --aviso: #b45309;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-pozo: var(--pozo);
+  --color-chorro: var(--chorro);
+  --color-pila: var(--pila);
+  --color-papel: var(--papel);
+  --color-sequia: var(--sequia);
+  --color-aviso: var(--aviso);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

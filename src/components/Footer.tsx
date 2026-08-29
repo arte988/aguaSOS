@@ -12,9 +12,6 @@ export function Footer() {
           <Link href="/reportar" className="hover:text-sky-800">
             Reportar
           </Link>
-          <Link href="/alertas" className="hover:text-sky-800">
-            Alertas
-          </Link>
           <Link href="/recursos" className="hover:text-sky-800">
             Recursos
           </Link>
