@@ -4,10 +4,17 @@ import { useEffect, useRef, useState } from "react";
 import {
   Map,
   Marker,
+  setWorkerUrl,
   type MapMouseEvent,
   type Map as MapLibreMap,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+
+// maplibre-gl 6 ships el worker como archivo aparte (5.x lo empotraba): hay que
+// apuntarlo a la copia que `scripts/copy-maplibre-worker.mjs` deja en /public.
+if (typeof window !== "undefined") {
+  setWorkerUrl(`${window.location.origin}/maplibre/maplibre-gl-worker.mjs`);
+}
 import { MAP_BOUNDS, MAP_CENTER, MAP_INITIAL_ZOOM, MAP_MAX_ZOOM, MAP_MIN_ZOOM, OPENFREEMAP_STYLE_URL } from "./tiles";
 import type { MapaBaseProps } from "./mapa-contrato";
 import { MapRuntimeProvider, getGeoJsonSource, useMapRuntime, type MapRuntime, type MapStatus } from "./mapa-contexto";
