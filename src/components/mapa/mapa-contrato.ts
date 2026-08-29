@@ -4,6 +4,7 @@ import type { BoundingBox, Punto } from "./tipos";
 export type MapaBaseProps = {
   children?: ReactNode;
   ariaLabel?: string;
+  className?: string;
   center?: Punto;
   initialZoom?: number;
   focusPoint?: Punto | null;

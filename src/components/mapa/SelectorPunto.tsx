@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { interpretarVector, type VectorCoordenadas } from "./logica";
-import { MapaBase } from "./MapaBase";
+import { MapCanvas } from "./MapaCanvas";
 import { MAP_BOUNDS } from "./tiles";
 import type { Punto, SelectorPuntoProps } from "./tipos";
 
@@ -20,8 +20,9 @@ export function SelectorPunto({
 }: SelectorPuntoProps) {
   return (
     <div className="flex flex-col gap-3">
-      <MapaBase
+      <MapCanvas
         ariaLabel="Mapa para elegir la ubicación del reporte"
+        className="h-80 min-h-80"
         center={valor ?? centroInicial}
         initialZoom={8}
         selectedPoint={valor}
@@ -33,7 +34,7 @@ export function SelectorPunto({
         <div className="pointer-events-none absolute left-3 top-3 rounded-lg bg-white/90 px-3 py-2 text-xs text-slate-700 shadow-sm">
           Tocá el mapa para marcar el punto o arrastrá el marcador.
         </div>
-      </MapaBase>
+      </MapCanvas>
 
       {/* El borrador vive en este subcomponente; la key lo remonta solo cuando
           el valor controlado cambia desde fuera, sin recrear el mapa. */}

@@ -1,30 +1,15 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Boton } from "@/components/ui/Boton";
 import { Campo } from "@/components/ui/Campo";
+import { SelectorPunto } from "@/components/mapa/SelectorPunto";
+import { precargarCartografia } from "@/components/mapa/precargar";
 import { MAP_CENTER } from "@/components/mapa/tiles";
 import { formatearNumero } from "@/lib/formato";
 import { CLASE_INPUT } from "../_lib/clases";
 import { puntoListo, type Punto } from "../_lib/tipos";
 import { IconoPin } from "./iconos";
-
-const SelectorPunto = dynamic(
-  () => import("@/components/mapa/SelectorPunto").then((modulo) => modulo.SelectorPunto),
-  {
-    ssr: false,
-    loading: () => (
-      <div
-        className="grid min-h-80 w-full place-items-center rounded-2xl bg-pila text-sm text-pozo"
-        role="status"
-        aria-live="polite"
-      >
-        Cargando mapa…
-      </div>
-    ),
-  },
-);
 
 interface UbicacionProps {
   valor: Punto | null;
@@ -36,6 +21,7 @@ export function Ubicacion({ valor, onChange, error }: UbicacionProps) {
   const [errorGps, setErrorGps] = useState<string | null>(null);
   const [buscando, setBuscando] = useState(false);
   const [mapaAbierto, setMapaAbierto] = useState(false);
+  const [mapaMontado, setMapaMontado] = useState(false);
   const [manualAbierto, setManualAbierto] = useState(false);
   const [latManual, setLatManual] = useState(
     valor && Number.isFinite(valor.lat) ? String(valor.lat) : "",
@@ -45,6 +31,20 @@ export function Ubicacion({ valor, onChange, error }: UbicacionProps) {
   );
 
   const tomada = puntoListo(valor);
+
+  useEffect(() => {
+    precargarCartografia();
+  }, []);
+
+  useEffect(() => {
+    if (!mapaAbierto) {
+      setMapaMontado(false);
+      return;
+    }
+    precargarCartografia();
+    const frame = requestAnimationFrame(() => setMapaMontado(true));
+    return () => cancelAnimationFrame(frame);
+  }, [mapaAbierto]);
 
   function aplicarManual(campo: "lat" | "lng", crudo: string) {
     const siguienteLat = campo === "lat" ? crudo : latManual;
@@ -147,23 +147,37 @@ export function Ubicacion({ valor, onChange, error }: UbicacionProps) {
       <details
         className="rounded-xl border border-pila bg-papel motion-reduce:transition-none"
         open={mapaAbierto}
-        onToggle={(evento) => setMapaAbierto(evento.currentTarget.open)}
+        onToggle={(evento) => {
+          const abierto = evento.currentTarget.open;
+          setMapaAbierto(abierto);
+          if (abierto) precargarCartografia();
+        }}
       >
         <summary className="min-h-11 cursor-pointer px-3 py-2 text-base font-semibold text-pozo">
           Ajustar en el mapa
         </summary>
         <div className="border-t border-pila p-3">
           {mapaAbierto ? (
-            <SelectorPunto
-              valor={tomada ? valor : null}
-              onChange={(punto) => {
-                setLatManual(String(punto.lat));
-                setLngManual(String(punto.lng));
-                setErrorGps(null);
-                onChange(punto);
-              }}
-              centroInicial={MAP_CENTER}
-            />
+            mapaMontado ? (
+              <SelectorPunto
+                valor={tomada ? valor : null}
+                onChange={(punto) => {
+                  setLatManual(String(punto.lat));
+                  setLngManual(String(punto.lng));
+                  setErrorGps(null);
+                  onChange(punto);
+                }}
+                centroInicial={MAP_CENTER}
+              />
+            ) : (
+              <div
+                className="grid h-80 w-full place-items-center rounded-2xl bg-pila text-sm text-pozo"
+                role="status"
+                aria-live="polite"
+              >
+                Cargando mapa…
+              </div>
+            )
           ) : null}
         </div>
       </details>

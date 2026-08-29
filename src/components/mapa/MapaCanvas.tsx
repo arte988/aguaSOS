@@ -38,6 +38,7 @@ function MapInstance({
   focusZoom = 14,
   markerDraggable = false,
   bordeRedondeado = true,
+  className,
   onViewportChange,
   onMapClick,
   selectedPoint,
@@ -55,6 +56,11 @@ function MapInstance({
   const [status, setStatus] = useState<MapStatus>("loading");
   const [fatalError, setFatalError] = useState<string | null>(null);
   const [tileError, setTileError] = useState<string | null>(null);
+  const [pintarCarga, setPintarCarga] = useState(false);
+
+  useEffect(() => {
+    setPintarCarga(true);
+  }, []);
 
   // Keep map event handlers reading fresh callbacks without re-registering them
   // on every parent render.
@@ -73,6 +79,7 @@ function MapInstance({
       setFatalError(null);
       setStatus("ready");
       callbacksRef.current.onViewportChange?.(getBoundingBox(instance));
+      instance.resize();
     };
 
     const instance = new Map({
@@ -130,6 +137,22 @@ function MapInstance({
   }, [initialCenter.lat, initialCenter.lng, initialZoom]);
 
   useEffect(() => {
+    if (!map || status !== "ready") return;
+    const shell = containerRef.current?.parentElement;
+    if (!shell) return;
+
+    const redimensionar = () => {
+      map.resize();
+    };
+
+    const observer = new ResizeObserver(redimensionar);
+    observer.observe(shell);
+    redimensionar();
+
+    return () => observer.disconnect();
+  }, [map, status]);
+
+  useEffect(() => {
     return () => {
       markerRef.current?.remove();
       markerRef.current = null;
@@ -178,7 +201,7 @@ function MapInstance({
   return (
     <MapRuntimeProvider value={runtime}>
       <div
-        className={`relative h-full min-h-80 w-full overflow-hidden bg-sky-100 ${bordeRedondeado ? "rounded-2xl" : ""}`}
+        className={`relative w-full overflow-hidden bg-sky-100 ${className ?? "h-full min-h-80"} ${bordeRedondeado ? "rounded-2xl" : ""}`}
       >
         <div
           ref={containerRef}
@@ -189,7 +212,7 @@ function MapInstance({
         />
         {children}
         <MapControls center={initialCenter} initialZoom={initialZoom} />
-        {status === "loading" ? (
+        {pintarCarga && status === "loading" ? (
           <div
             className="pointer-events-none absolute inset-0 grid place-items-center bg-white/70 text-sm font-medium text-sky-950"
             role="status"

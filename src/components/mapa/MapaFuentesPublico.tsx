@@ -14,7 +14,11 @@ import { CapaFuentes } from "./CapaFuentes";
 import { OverlayDatos } from "./OverlayDatos";
 import { PanelReporteDestacado } from "./PanelReporteDestacado";
 import type { GeoJsonFeature, Punto, SourceProperties } from "./tipos";
-import { leerReporteDestacado, limpiarReporteDestacado } from "@/lib/reporteDestacado";
+import {
+  leerReporteDestacado,
+  limpiarReporteDestacado,
+  type ReporteDestacado,
+} from "@/lib/reporteDestacado";
 import { precargarCartografia } from "./precargar";
 
 function parsePunto(searchParams: URLSearchParams): Punto | null {
@@ -36,21 +40,32 @@ export function MapaFuentesPublico() {
 
   const reporteId = searchParams.get("reporteId");
   const puntoUrl = useMemo(() => parsePunto(searchParams), [searchParams]);
+  const [reporteDestacado, setReporteDestacado] = useState<ReporteDestacado | null>(null);
+  const [sesionLista, setSesionLista] = useState(false);
 
-  const reporteDestacado = useMemo(() => {
-    if (!reporteId || !puntoUrl) return null;
+  // sessionStorage solo existe en el cliente; leerlo en render rompe la hidratación.
+  useEffect(() => {
+    if (!reporteId || !puntoUrl) {
+      setReporteDestacado(null);
+      setSesionLista(true);
+      return;
+    }
     const guardado = leerReporteDestacado();
-    if (!guardado || guardado.reporteId !== reporteId) return null;
-    return guardado;
+    if (guardado?.reporteId === reporteId) {
+      setReporteDestacado(guardado);
+    } else {
+      setReporteDestacado(null);
+    }
+    setSesionLista(true);
   }, [puntoUrl, reporteId]);
 
-  // URL con params viejos (sin sesión) dejaba zoom raro + marcador suelto.
   useEffect(() => {
+    if (!sesionLista) return;
     const tieneParams = reporteId || searchParams.has("lat") || searchParams.has("lng");
     if (tieneParams && !reporteDestacado) {
       router.replace("/mapa", { scroll: false });
     }
-  }, [reporteDestacado, reporteId, router, searchParams]);
+  }, [reporteDestacado, reporteId, router, searchParams, sesionLista]);
 
   const puntoReporte = reporteDestacado
     ? { lat: reporteDestacado.lat, lng: reporteDestacado.lng }
@@ -69,6 +84,7 @@ export function MapaFuentesPublico() {
   return (
     <MapCanvas
       key={reporteDestacado?.reporteId ?? "mapa-general"}
+      className="absolute inset-0 h-full min-h-0"
       ariaLabel="Mapa público de fuentes de suministro"
       bordeRedondeado={false}
       center={puntoReporte ?? MAP_CENTER}
