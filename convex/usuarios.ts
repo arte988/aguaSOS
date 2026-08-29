@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { UserIdentity } from "convex/server";
 import type { MutationCtx } from "./_generated/server";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import {
   getCurrentRol,
   getCurrentUserOrNull,
@@ -151,5 +151,25 @@ export const sincronizar = mutation({
       throw new Error("Not authenticated");
     }
     return await upsertDesdeIdentity(ctx, identity);
+  },
+});
+
+export const establecerRol = internalMutation({
+  args: {
+    usuarioId: v.id("usuarios"),
+    rol: rolUsuarioValidator,
+    estadoVerificacion: estadoVerificacionValidator,
+  },
+  returns: v.id("usuarios"),
+  handler: async (ctx, args) => {
+    const usuario = await ctx.db.get("usuarios", args.usuarioId);
+    if (!usuario) {
+      throw new Error("User not found");
+    }
+    await ctx.db.patch("usuarios", args.usuarioId, {
+      rol: args.rol,
+      estadoVerificacion: args.estadoVerificacion,
+    });
+    return args.usuarioId;
   },
 });

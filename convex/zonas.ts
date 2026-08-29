@@ -3,6 +3,7 @@ import { ZONAS_CATALOGO } from "./catalogo/zonasCatalogo";
 import { internalMutation, query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { tipoZonaValidator } from "./lib/literals";
+import { resolverDistritoPorPunto } from "./lib/resolverDistrito";
 
 const zonaPublicaValidator = v.object({
   _id: v.id("zonas"),
@@ -53,12 +54,31 @@ export const buscarPorPunto = query({
     motivo: v.string(),
   }),
   handler: async () => {
-    return {
-      distritoId: null,
-      metodo: "no_disponible" as const,
-      motivo:
-        "No hay geometrías de distrito en el proyecto. No se asigna distrito por centroide más cercano.",
-    };
+    return resolverDistritoPorPunto();
+  },
+});
+
+export const insertar = internalMutation({
+  args: {
+    tipo: tipoZonaValidator,
+    nombre: v.string(),
+    codigo: v.string(),
+    padreId: v.optional(v.id("zonas")),
+    centroideLat: v.number(),
+    centroideLng: v.number(),
+    poblacion: v.optional(v.number()),
+  },
+  returns: v.id("zonas"),
+  handler: async (ctx, args) => {
+    return await ctx.db.insert("zonas", {
+      tipo: args.tipo,
+      nombre: args.nombre,
+      codigo: args.codigo,
+      ...(args.padreId ? { padreId: args.padreId } : {}),
+      centroideLat: args.centroideLat,
+      centroideLng: args.centroideLng,
+      ...(args.poblacion !== undefined ? { poblacion: args.poblacion } : {}),
+    });
   },
 });
 
