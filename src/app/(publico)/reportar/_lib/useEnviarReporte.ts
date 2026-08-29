@@ -15,7 +15,9 @@ function guardarFuentesDeSesion(fuentes: ResultadoCrear["fuentesCercanas"]) {
 
 function enviarMock(datos: DatosReporte): ResultadoCrear {
   const reporteId = `mock-${datos.claveIdempotencia}`;
-  console.info("[aguaSOS] reporte mock (Convex aún no está)", datos);
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[aguaSOS] reporte mock (Convex aún no está)", datos);
+  }
   return { reporteId };
 }
 

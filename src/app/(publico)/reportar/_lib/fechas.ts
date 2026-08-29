@@ -12,12 +12,13 @@ export function epochMsAYmd(ms: number): string {
 }
 
 export function ymdAEpochMsLocal(ymd: string): number {
-  const partes = ymd.split("-").map(Number);
-  const y = partes[0];
-  const m = partes[1];
-  const d = partes[2];
-  if (y === undefined || m === undefined || d === undefined) {
+  const [y, m, d] = ymd.split("-").map(Number);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) {
     throw new Error("Fecha inválida");
   }
-  return new Date(y, m - 1, d).getTime();
+  const fecha = new Date(y, m - 1, d);
+  if (fecha.getFullYear() !== y || fecha.getMonth() !== m - 1 || fecha.getDate() !== d) {
+    throw new Error("Fecha inválida");
+  }
+  return fecha.getTime();
 }
