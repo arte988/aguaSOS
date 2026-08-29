@@ -1,10 +1,10 @@
 import { CLAVE_BORRADOR } from "./constantes";
 import { hoyLocalYmd } from "./fechas";
-import type { Impacto, PersonasRango, PuntoElegido } from "./tipos";
+import { puntoListo, type Impacto, type PersonasRango, type Punto } from "./tipos";
 
 export interface Borrador {
   claveIdempotencia: string;
-  punto: PuntoElegido | null;
+  punto: Punto | null;
   personasRango: PersonasRango | null;
   menores: string;
   impacto: Impacto | null;
@@ -41,10 +41,8 @@ function leerDisco(): Borrador | null {
   }
 }
 
-function puntoValido(punto: PuntoElegido | null): PuntoElegido | null {
-  if (!punto) return null;
-  if (!Number.isFinite(punto.lat) || !Number.isFinite(punto.lng)) return null;
-  return punto;
+function puntoValido(punto: Punto | null): Punto | null {
+  return puntoListo(punto) ? punto : null;
 }
 
 function normalizar(crudo: Borrador): Borrador {

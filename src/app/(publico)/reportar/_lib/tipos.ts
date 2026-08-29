@@ -1,3 +1,7 @@
+import type { Punto } from "@/components/mapa/tipos";
+
+export type { Punto } from "@/components/mapa/tipos";
+
 export type PersonasRango = "1-5" | "6-20" | "21-100" | "101-500" | "500+";
 
 export type Impacto = "casa" | "pasaje" | "comunidad";
@@ -18,12 +22,9 @@ export type Afectacion =
     }
   | { tipo: "otra"; descripcion: string };
 
-export interface Punto {
-  lat: number;
-  lng: number;
+export function puntoListo(punto: Punto | null | undefined): punto is Punto {
+  return Boolean(punto && Number.isFinite(punto.lat) && Number.isFinite(punto.lng));
 }
-
-export type PuntoElegido = Punto & { precisionM?: number };
 
 export interface DatosReporte {
   claveIdempotencia: string;
