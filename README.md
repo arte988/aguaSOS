@@ -1,6 +1,6 @@
 # aguaSOS
 
-Aplicación para reportar emergencias de agua, ver alertas de la comunidad y dar seguimiento a un caso. Frontend Next.js 16, backend Convex y mapa MapLibre.
+Plataforma para reportar escasez de agua y localizar las fuentes de suministro más cercanas. Frontend Next.js 16, backend Convex y mapa MapLibre.
 
 ## Cómo empezar
 
@@ -24,11 +24,9 @@ Abre [http://localhost:3000](http://localhost:3000).
 ## Páginas
 
 - `/` — inicio
-- `/mapa` — mapa MapLibre (OpenFreeMap)
-- `/reportar` — formulario de emergencia
-- `/alertas` — reportes recientes
-- `/recursos` — qué hacer mientras llega ayuda
-- `/seguimiento` — consulta por código SOS
+- `/mapa` — mapa de fuentes de suministro
+- `/reportar` — reporte de escasez (devuelve las fuentes cercanas)
+- `/recursos` — qué hacer cuando falta el agua
 
 Los reportes de emergencia se guardan en el navegador (localStorage) en esta primera versión.
 

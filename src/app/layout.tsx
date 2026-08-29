@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     template: "%s · aguaSOS",
   },
   description:
-    "Reporta emergencias de agua, consulta alertas de tu comunidad y da seguimiento a tu caso.",
+    "Reporta la escasez de agua y encuentra las fuentes de suministro más cercanas.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

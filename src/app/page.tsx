@@ -2,16 +2,16 @@ import Link from "next/link";
 
 const STEPS = [
   {
-    title: "Describe la emergencia",
-    text: "Sin agua, fuga, baja presión o contaminación. En menos de un minuto.",
+    title: "Reporta la escasez",
+    text: "Dónde y desde cuándo falta el agua, en tu casa, cuadra o comunidad. Sin necesidad de cuenta.",
   },
   {
-    title: "Recibe un código",
-    text: "Te damos un folio SOS para que puedas consultar el estado del reporte.",
+    title: "Encuentra dónde abastecerte",
+    text: "Te mostramos las fuentes de suministro más cercanas con su teléfono para que puedas abastecerte.",
   },
   {
-    title: "La comunidad se entera",
-    text: "Tu alerta aparece para que vecinos y equipos de apoyo vean lo que ocurre.",
+    title: "¿Tienes agua para compartir?",
+    text: "Si tienes pozo, nacimiento, tanque o vendes agua, regístrate como suministrador y apareces visible en el mapa cuando alguien reporta cerca.",
   },
 ];
 
@@ -21,27 +21,28 @@ export default function Home() {
       <section className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:py-20">
         <div>
           <p className="inline-flex rounded-full bg-rose-50 px-3 py-1 text-sm font-semibold text-rose-700">
-            Emergencias de agua
+            Escasez de agua
           </p>
           <h1 className="mt-4 max-w-xl text-4xl font-semibold tracking-tight text-sky-950 sm:text-5xl">
-            Cuando falta el agua, aguaSOS te ayuda a pedir apoyo.
+            Reporta la escasez y encuentra dónde abastecerte.
           </h1>
           <p className="mt-4 max-w-lg text-lg leading-8 text-slate-600">
-            Reporta un corte, una fuga o agua no potable. Comparte la alerta con tu
-            comunidad y da seguimiento con un código.
+            Reporta la escasez en tu casa, tu cuadra o tu comunidad y te mostramos las
+            fuentes de suministro más cercanas. Si tienes pozo, un nacimiento o venta de
+            agua, regístrate como suministrador para quedar visible cuando alguien te necesite.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/reportar"
               className="rounded-full bg-rose-600 px-6 py-3 text-center text-sm font-semibold text-white hover:bg-rose-700"
             >
-              Reportar emergencia
+              Reportar escasez
             </Link>
             <Link
-              href="/alertas"
+              href="/sign-up"
               className="rounded-full border border-sky-200 bg-white px-6 py-3 text-center text-sm font-semibold text-sky-900 hover:bg-sky-50"
             >
-              Ver alertas activas
+              Sumar mi fuente
             </Link>
           </div>
         </div>

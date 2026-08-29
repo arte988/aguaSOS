@@ -39,7 +39,7 @@ export default function ResourcesPage() {
         Qué hacer mientras llega ayuda
       </h1>
       <p className="mt-2 text-slate-600">
-        Guía rápida para el momento de la emergencia. Si hay riesgo inmediato,
+        Guía rápida para cuando falta el agua. Si hay riesgo inmediato,
         contacta también a los servicios de tu localidad.
       </p>
 
@@ -60,15 +60,16 @@ export default function ResourcesPage() {
       </div>
 
       <div className="mt-8 rounded-2xl bg-rose-50 p-5">
-        <p className="font-semibold text-rose-900">¿La emergencia sigue activa?</p>
+        <p className="font-semibold text-rose-900">¿Sigues sin agua?</p>
         <p className="mt-1 text-sm text-rose-800">
-          Envía un reporte para que quede registrado y puedas consultarlo después.
+          Reporta la escasez para que tu zona quede visible y recibas las fuentes de
+          suministro más cercanas.
         </p>
         <Link
           href="/reportar"
           className="mt-4 inline-flex rounded-full bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-rose-700"
         >
-          Reportar ahora
+          Reportar escasez
         </Link>
       </div>
     </main>
