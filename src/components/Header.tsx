@@ -9,9 +9,7 @@ const NAV = [
   { href: "/", label: "Inicio" },
   { href: "/mapa", label: "Mapa" },
   { href: "/reportar", label: "Reportar" },
-  { href: "/alertas", label: "Alertas" },
   { href: "/recursos", label: "Recursos" },
-  { href: "/seguimiento", label: "Seguimiento" },
 ];
 
 const clerkEnabled = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
