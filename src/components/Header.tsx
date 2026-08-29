@@ -77,7 +77,7 @@ export function Header() {
               href="/reportar"
               className="rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700"
             >
-              Pedir ayuda
+              Reportar
             </Link>
           </div>
         </nav>
@@ -142,7 +142,7 @@ export function Header() {
               onClick={() => setOpen(false)}
               className="mt-1 rounded-lg bg-rose-600 px-3 py-2 text-center text-sm font-semibold text-white"
             >
-              Pedir ayuda
+              Reportar
             </Link>
           </div>
         </nav>
