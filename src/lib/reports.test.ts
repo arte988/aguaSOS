@@ -16,6 +16,7 @@ const {
   leerReportesServidor,
   saveReport,
   suscribirReportes,
+// @ts-expect-error Node 22 ejecuta este test desde TypeScript y necesita la extensión.
 } = await import("./reports.ts");
 
 test("guardar un reporte invalida la caché y notifica a los suscriptores", () => {

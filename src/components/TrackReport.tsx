@@ -8,6 +8,7 @@ import {
   leerReportesCliente,
   leerReportesServidor,
   suscribirReportes,
+  type WaterReport,
 } from "@/lib/reports";
 import { StatusBadge } from "@/components/AlertsList";
 
@@ -15,31 +16,45 @@ export function TrackReport() {
   const searchParams = useSearchParams();
   const initialCode = searchParams.get("codigo") ?? "";
   const [code, setCode] = useState(initialCode);
-  const [consultado, setConsultado] = useState(false);
+  // Término efectivamente consultado. Se guarda al enviar para que la búsqueda
+  // no siga al input: si no, al teclear un código nuevo la tarjeta anterior
+  // desaparece y sale "no encontramos" antes de pulsar Consultar.
+  const [consultado, setConsultado] = useState<string | null>(null);
+  // Si la URL cambia de ?codigo= sin desmontar, hay que resincronizar.
+  // Patrón de React para ajustar estado cuando cambia una prop, sin efecto.
+  const [codigoUrlPrevio, setCodigoUrlPrevio] = useState(initialCode);
+  if (initialCode !== codigoUrlPrevio) {
+    setCodigoUrlPrevio(initialCode);
+    setCode(initialCode);
+    setConsultado(null);
+  }
+
   const reports = useSyncExternalStore(
     suscribirReportes,
     leerReportesCliente,
     leerReportesServidor,
   );
 
-  const busqueda = consultado ? code : initialCode;
-  const report = busqueda
-    ? (reports.find((r) => r.code.toUpperCase() === busqueda.trim().toUpperCase()) ?? null)
-    : null;
-  const buscado = consultado || initialCode !== "";
+  const busqueda = consultado ?? initialCode;
+  const report = buscarReporte(reports, busqueda);
+  const buscado = consultado !== null || initialCode !== "";
+  // El aviso "Reporte enviado" solo aplica al código que trajo la URL: tras
+  // consultar otro distinto seguiría diciendo que guardes el equivocado.
+  const reporteRecienEnviado = buscarReporte(reports, initialCode);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setConsultado(true);
+    setConsultado(code);
   }
 
   return (
     <div className="space-y-6">
-      {initialCode && report ? (
+      {reporteRecienEnviado ? (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-900">
           <p className="font-semibold">Reporte enviado</p>
           <p className="mt-1 text-sm">
-            Guarda tu código <span className="font-mono font-bold">{report.code}</span>{" "}
+            Guarda tu código{" "}
+            <span className="font-mono font-bold">{reporteRecienEnviado.code}</span>{" "}
             para consultar el estado más tarde.
           </p>
         </div>
@@ -98,4 +113,10 @@ function Info({ label, value }: { label: string; value: string }) {
       <dd className="mt-1 font-medium text-sky-950">{value}</dd>
     </div>
   );
+}
+
+function buscarReporte(reports: WaterReport[], code: string): WaterReport | null {
+  const normalizado = code.trim().toUpperCase();
+  if (!normalizado) return null;
+  return reports.find((r) => r.code.toUpperCase() === normalizado) ?? null;
 }

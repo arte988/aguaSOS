@@ -57,7 +57,7 @@ export const SEED_ALERTS: WaterReport[] = [
     address: "Varios sectores",
     description: "Corte de agua desde la madrugada. Varias manzanas sin servicio.",
     peopleAffected: 120,
-    createdAt: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
+    createdAt: "2026-08-29T12:30:00.000Z",
     status: "en_revision",
   },
   {
@@ -71,7 +71,7 @@ export const SEED_ALERTS: WaterReport[] = [
     address: "Calle principal, frente al parque",
     description: "Fuga visible en la vía pública. El agua está corriendo hacia la calle.",
     peopleAffected: 40,
-    createdAt: new Date(Date.now() - 1000 * 60 * 40).toISOString(),
+    createdAt: "2026-08-29T13:20:00.000Z",
     status: "recibido",
   },
 ];
@@ -99,10 +99,14 @@ export function saveReport(report: WaterReport) {
   return report;
 }
 
-export function getAllReports(): WaterReport[] {
-  return [...getStoredReports(), ...SEED_ALERTS].sort(
+function ordenarPorFecha(reports: WaterReport[]): WaterReport[] {
+  return [...reports].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
+}
+
+export function getAllReports(): WaterReport[] {
+  return ordenarPorFecha([...getStoredReports(), ...SEED_ALERTS]);
 }
 
 export function formatDate(iso: string) {
@@ -137,9 +141,10 @@ export function leerReportesCliente(): WaterReport[] {
   return cacheReportes;
 }
 
-// getServerSnapshot debe devolver siempre la misma referencia; en el servidor
-// no hay localStorage, así que el resultado es constante.
-const REPORTES_SERVIDOR: WaterReport[] = getAllReports();
+// getServerSnapshot debe devolver siempre la misma referencia Y coincidir con
+// el HTML del servidor. Este módulo también se evalúa en el navegador, así que
+// no puede mirar localStorage: sería N+2 al hidratar contra los 2 del SSR.
+const REPORTES_SERVIDOR: WaterReport[] = ordenarPorFecha(SEED_ALERTS);
 
 export function leerReportesServidor(): WaterReport[] {
   return REPORTES_SERVIDOR;
