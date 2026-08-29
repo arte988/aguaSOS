@@ -1,6 +1,6 @@
 # aguaSOS
 
-Aplicación web con React, Next.js y Tailwind CSS.
+Aplicación para reportar emergencias de agua, ver alertas de la comunidad y dar seguimiento a un caso.
 
 ## Cómo empezar
 
@@ -8,7 +8,17 @@ Aplicación web con React, Next.js y Tailwind CSS.
 npm run dev
 ```
 
-Abre [http://localhost:3000](http://localhost:3000) en el navegador.
+Abre [http://localhost:3000](http://localhost:3000).
+
+## Páginas
+
+- `/` — inicio
+- `/reportar` — formulario de emergencia
+- `/alertas` — reportes recientes
+- `/recursos` — qué hacer mientras llega ayuda
+- `/seguimiento` — consulta por código SOS
+
+Los reportes se guardan en el navegador (localStorage) en esta primera versión.
 
 ## Scripts
 

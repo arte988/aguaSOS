@@ -1,21 +1,81 @@
+import Link from "next/link";
+
+const STEPS = [
+  {
+    title: "Describe la emergencia",
+    text: "Sin agua, fuga, baja presión o contaminación. En menos de un minuto.",
+  },
+  {
+    title: "Recibe un código",
+    text: "Te damos un folio SOS para que puedas consultar el estado del reporte.",
+  },
+  {
+    title: "La comunidad se entera",
+    text: "Tu alerta aparece para que vecinos y equipos de apoyo vean lo que ocurre.",
+  },
+];
+
 export default function Home() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center bg-[var(--background)] px-6">
-      <main className="flex w-full max-w-xl flex-col items-center gap-8 text-center">
-        <p className="rounded-full border border-sky-200 bg-sky-50 px-4 py-1 text-sm font-medium text-sky-700 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300">
-          Next.js · React · Tailwind CSS
-        </p>
-        <h1 className="text-5xl font-semibold tracking-tight text-sky-700 dark:text-sky-300 sm:text-6xl">
-          aguaSOS
-        </h1>
-        <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-          El proyecto está listo. Edita{" "}
-          <code className="rounded bg-sky-100 px-1.5 py-0.5 font-mono text-[0.9em] text-sky-800 dark:bg-sky-900 dark:text-sky-200">
-            src/app/page.tsx
-          </code>{" "}
-          para empezar a construir.
-        </p>
-      </main>
-    </div>
+    <main>
+      <section className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:py-20">
+        <div>
+          <p className="inline-flex rounded-full bg-rose-50 px-3 py-1 text-sm font-semibold text-rose-700">
+            Emergencias de agua
+          </p>
+          <h1 className="mt-4 max-w-xl text-4xl font-semibold tracking-tight text-sky-950 sm:text-5xl">
+            Cuando falta el agua, aguaSOS te ayuda a pedir apoyo.
+          </h1>
+          <p className="mt-4 max-w-lg text-lg leading-8 text-slate-600">
+            Reporta un corte, una fuga o agua no potable. Comparte la alerta con tu
+            comunidad y da seguimiento con un código.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Link
+              href="/reportar"
+              className="rounded-full bg-rose-600 px-6 py-3 text-center text-sm font-semibold text-white hover:bg-rose-700"
+            >
+              Reportar emergencia
+            </Link>
+            <Link
+              href="/alertas"
+              className="rounded-full border border-sky-200 bg-white px-6 py-3 text-center text-sm font-semibold text-sky-900 hover:bg-sky-50"
+            >
+              Ver alertas activas
+            </Link>
+          </div>
+        </div>
+
+        <aside className="rounded-3xl bg-sky-800 p-6 text-sky-50 shadow-xl sm:p-8">
+          <p className="text-sm font-semibold uppercase tracking-wide text-sky-200">
+            Prioridad
+          </p>
+          <p className="mt-3 text-2xl font-semibold">Si no hay agua ahora</p>
+          <ul className="mt-6 space-y-3 text-sm leading-6 text-sky-100">
+            <li>Usa agua embotellada o previamente almacenada para beber.</li>
+            <li>Cierra la llave si ves una fuga y avisa en el reporte.</li>
+            <li>No bebas agua con olor, color o sabor extraño.</li>
+          </ul>
+          <Link
+            href="/recursos"
+            className="mt-6 inline-flex text-sm font-semibold text-white underline-offset-4 hover:underline"
+          >
+            Ver qué hacer →
+          </Link>
+        </aside>
+      </section>
+
+      <section className="border-t border-sky-100 bg-white">
+        <div className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-14 sm:px-6 md:grid-cols-3">
+          {STEPS.map((step, index) => (
+            <article key={step.title} className="rounded-2xl bg-sky-50 p-5">
+              <p className="text-sm font-bold text-sky-700">0{index + 1}</p>
+              <h2 className="mt-2 text-lg font-semibold text-sky-950">{step.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{step.text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+    </main>
   );
 }
