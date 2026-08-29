@@ -38,12 +38,6 @@ export default function Home() {
             >
               Reportar escasez
             </Link>
-            <Link
-              href="/sign-up"
-              className="rounded-full border border-sky-200 bg-white px-6 py-3 text-center text-sm font-semibold text-sky-900 hover:bg-sky-50"
-            >
-              Sumar mi fuente
-            </Link>
           </div>
         </div>
 
