@@ -36,6 +36,15 @@ const EMPTY_COLLECTIONS_RESULT: CartographyDataResult = {
   collections: EMPTY_COLLECTIONS,
 };
 
+function esPromesa<T>(value: T | Promise<T>): value is Promise<T> {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "then" in value &&
+    typeof (value as Promise<T>).then === "function"
+  );
+}
+
 /**
  * A tiny external store so query state lives outside React's render cycle:
  * the loading frame is emitted for already-subscribed consumers and never set
@@ -43,11 +52,7 @@ const EMPTY_COLLECTIONS_RESULT: CartographyDataResult = {
  * source would implement at the seam.
  */
 class CartographyStore {
-  private snapshot: CartographyDataState = {
-    status: "loading",
-    origin: "fixture",
-    collections: EMPTY_COLLECTIONS,
-  };
+  private snapshot: CartographyDataState = EMPTY_COLLECTIONS_RESULT;
   private listeners = new Set<() => void>();
   private counter = 0;
 
@@ -72,6 +77,12 @@ class CartographyStore {
 
   resolve(generation: number, result: CartographyDataResult) {
     if (generation !== this.counter) return;
+    this.snapshot = result;
+    this.notify();
+  }
+
+  /** Evita un frame de “Cargando…” cuando la fuente responde en el mismo tick. */
+  adopt(result: CartographyDataResult) {
     this.snapshot = result;
     this.notify();
   }
@@ -103,8 +114,14 @@ export function useCartographyData({
       ...(from && to ? { dateRange: { from, to } } : {}),
     };
 
+    const outcome = source.get(query);
+    if (!esPromesa(outcome)) {
+      store.adopt(outcome);
+      return;
+    }
+
     const generation = store.begin({ origin: source.origin });
-    Promise.resolve(source.get(query)).then(
+    outcome.then(
       (resolved) => {
         store.resolve(generation, resolved);
       },

@@ -8,6 +8,8 @@ import {
   normalizeDateRange,
   parseCapasUrl,
   parseRangoUrl,
+  mezclarReporteEnRiesgo,
+  pesoDesdeReporte,
 // @ts-expect-error Node 22 runs this test directly from TypeScript and needs the extension.
 } from "./logica.ts";
 import type {
@@ -164,4 +166,39 @@ test("una corrección manual emite un punto sin precisión GPS", () => {
   if (resultado.tipo === "punto") {
     assert.equal("precisionM" in resultado.punto, false);
   }
+});
+
+test("mezclarReporteEnRiesgo añade el reporte recién enviado al heatmap", () => {
+  const base = collections([point("demo-1", [-89.0, 13.7], "2026-08-01T12:00:00-06:00")], []);
+  const reporte = {
+    reporteId: "nuevo-1",
+    lat: 13.71,
+    lng: -89.15,
+    personasRango: "6-20" as const,
+    impacto: "pasaje" as const,
+    creadoEn: Date.parse("2026-08-29T12:00:00-06:00"),
+  };
+
+  assert.equal(pesoDesdeReporte(reporte), 6);
+
+  const mezclado = mezclarReporteEnRiesgo(base.risk, reporte);
+  assert.equal(mezclado.features.length, 2);
+  assert.equal(mezclado.features[0]?.properties.reportId, "nuevo-1");
+  assert.equal(mezclado.features[0]?.properties.weight, 6);
+});
+
+test("mezclarReporteEnRiesgo reemplaza un reporte con el mismo id", () => {
+  const base = collections([point("dup", [-89.0, 13.7], "2026-08-01T12:00:00-06:00")], []);
+  const reporte = {
+    reporteId: "dup",
+    lat: 13.8,
+    lng: -88.9,
+    personasRango: "500+" as const,
+    impacto: "comunidad" as const,
+    creadoEn: Date.now(),
+  };
+
+  const mezclado = mezclarReporteEnRiesgo(base.risk, reporte);
+  assert.equal(mezclado.features.length, 1);
+  assert.equal(mezclado.features[0]?.geometry.coordinates[1], 13.8);
 });

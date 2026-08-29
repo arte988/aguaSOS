@@ -44,7 +44,7 @@ test.describe("reportar", () => {
     await expect(page.getByText("No se dio permiso de ubicación")).toHaveCount(0);
   });
 
-  test("el envío completo llega a gracias con folio y teléfono", async ({ page }) => {
+  test("el envío completo llega al mapa con folio y teléfono", async ({ page }) => {
     await abrirFormularioLimpio(page);
 
     await page.getByRole("button", { name: "Usar mi ubicación" }).click();
@@ -54,9 +54,8 @@ test.describe("reportar", () => {
     await page.getByRole("button", { name: /^Casa/ }).click();
     await page.getByRole("button", { name: "Enviar el reporte" }).click();
 
-    await expect(page).toHaveURL(/\/reportar\/gracias/);
-    await expect(page.getByRole("heading", { name: "Tu reporte quedó enviado" })).toBeVisible();
-    await expect(page.getByText(/Folio /)).toBeVisible();
+    await expect(page).toHaveURL(/\/mapa\?.*reporteId=/);
+    await expect(page.getByRole("heading", { name: "Tu reporte quedó en el mapa" })).toBeVisible();
     await expect(page.locator('a[href^="tel:"]').first()).toBeVisible();
     await expect(page.getByRole("link", { name: /Llamar / }).first()).toBeVisible();
   });

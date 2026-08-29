@@ -1,32 +1,97 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ETIQUETA_SUMINISTRO } from "./colores";
 import { normalizePhone } from "./CapaFuentes";
+import { CapaRiesgo } from "./CapaRiesgo";
 import { useCartographyData } from "./datos";
-import { MAP_BOUNDS, MAP_CENTER } from "./tiles";
-import { MapaBase } from "./MapaBase";
+import { LeyendaRiesgoCompacta } from "./LeyendaRiesgoCompacta";
+import { mezclarReporteEnRiesgo } from "./logica";
+import { MAP_BOUNDS, MAP_CENTER, MAP_INITIAL_ZOOM } from "./tiles";
+import { MapCanvas } from "./MapaCanvas";
 import { CapaFuentes } from "./CapaFuentes";
 import { OverlayDatos } from "./OverlayDatos";
-import type { GeoJsonFeature, SourceProperties } from "./tipos";
+import { PanelReporteDestacado } from "./PanelReporteDestacado";
+import type { GeoJsonFeature, Punto, SourceProperties } from "./tipos";
+import { leerReporteDestacado, limpiarReporteDestacado } from "@/lib/reporteDestacado";
+import { precargarCartografia } from "./precargar";
+
+function parsePunto(searchParams: URLSearchParams): Punto | null {
+  const lat = Number(searchParams.get("lat"));
+  const lng = Number(searchParams.get("lng"));
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  return { lat, lng };
+}
 
 export function MapaFuentesPublico() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [bbox, setBbox] = useState(MAP_BOUNDS);
   const state = useCartographyData({ bbox });
 
+  useEffect(() => {
+    precargarCartografia();
+  }, []);
+
+  const reporteId = searchParams.get("reporteId");
+  const puntoUrl = useMemo(() => parsePunto(searchParams), [searchParams]);
+
+  const reporteDestacado = useMemo(() => {
+    if (!reporteId || !puntoUrl) return null;
+    const guardado = leerReporteDestacado();
+    if (!guardado || guardado.reporteId !== reporteId) return null;
+    return guardado;
+  }, [puntoUrl, reporteId]);
+
+  // URL con params viejos (sin sesión) dejaba zoom raro + marcador suelto.
+  useEffect(() => {
+    const tieneParams = reporteId || searchParams.has("lat") || searchParams.has("lng");
+    if (tieneParams && !reporteDestacado) {
+      router.replace("/mapa", { scroll: false });
+    }
+  }, [reporteDestacado, reporteId, router, searchParams]);
+
+  const puntoReporte = reporteDestacado
+    ? { lat: reporteDestacado.lat, lng: reporteDestacado.lng }
+    : null;
+
+  const riesgo = useMemo(
+    () => mezclarReporteEnRiesgo(state.collections.risk, reporteDestacado),
+    [reporteDestacado, state.collections.risk],
+  );
+
+  function cerrarDestacado() {
+    limpiarReporteDestacado();
+    router.replace("/mapa", { scroll: false });
+  }
+
   return (
-    <MapaBase
+    <MapCanvas
+      key={reporteDestacado?.reporteId ?? "mapa-general"}
       ariaLabel="Mapa público de fuentes de suministro"
-      center={MAP_CENTER}
-      initialZoom={8}
+      bordeRedondeado={false}
+      center={puntoReporte ?? MAP_CENTER}
+      initialZoom={puntoReporte ? 14 : MAP_INITIAL_ZOOM}
+      focusPoint={puntoReporte}
+      focusZoom={14}
+      selectedPoint={puntoReporte}
+      showMarker={Boolean(puntoReporte)}
+      markerDraggable={false}
       onViewportChange={setBbox}
     >
+      <CapaRiesgo data={riesgo} />
       <CapaFuentes data={state.collections.sources} />
-      <div className="pointer-events-none absolute left-3 top-3 max-w-xs rounded-lg bg-white/90 px-3 py-2 text-xs text-slate-700 shadow-sm">
+      <div className="pointer-events-none absolute left-3 top-3 flex max-w-xs flex-col gap-2">
         <OverlayDatos state={state} />
+        <LeyendaRiesgoCompacta />
       </div>
-      <ListaFuentes fuentes={state.collections.sources.features} />
-    </MapaBase>
+      {reporteDestacado ? (
+        <PanelReporteDestacado reporte={reporteDestacado} onCerrar={cerrarDestacado} />
+      ) : (
+        <ListaFuentes fuentes={state.collections.sources.features} />
+      )}
+    </MapCanvas>
   );
 }
 

@@ -6,6 +6,10 @@ export type MapaBaseProps = {
   ariaLabel?: string;
   center?: Punto;
   initialZoom?: number;
+  focusPoint?: Punto | null;
+  focusZoom?: number;
+  markerDraggable?: boolean;
+  bordeRedondeado?: boolean;
   onViewportChange?: (bbox: BoundingBox) => void;
   onMapClick?: (point: Punto) => void;
   selectedPoint?: Punto | null;
