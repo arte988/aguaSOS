@@ -117,6 +117,9 @@ const listeners = new Set<() => void>();
 let cacheReportes: WaterReport[] | null = null;
 
 function emitirReportes() {
+  // Invalidar antes de notificar: useSyncExternalStore vuelve a leer el
+  // snapshot y sin esto recibiría la misma referencia y no re-renderizaría.
+  cacheReportes = null;
   listeners.forEach((listener) => listener());
 }
 
@@ -134,6 +137,10 @@ export function leerReportesCliente(): WaterReport[] {
   return cacheReportes;
 }
 
+// getServerSnapshot debe devolver siempre la misma referencia; en el servidor
+// no hay localStorage, así que el resultado es constante.
+const REPORTES_SERVIDOR: WaterReport[] = getAllReports();
+
 export function leerReportesServidor(): WaterReport[] {
-  return getAllReports();
+  return REPORTES_SERVIDOR;
 }
