@@ -1,6 +1,8 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { AppShell } from "@/components/app-shell/AppShell";
+import { Footer } from "@/components/Footer";
+import { Header } from "@/components/Header";
 import { ConvexClientProvider } from "./ConvexClientProvider";
 import "./globals.css";
 
@@ -15,8 +17,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "aguaSOS",
-  description: "Plataforma aguaSOS: reportes hídricos con Next.js y Convex",
+  title: {
+    default: "aguaSOS",
+    template: "%s · aguaSOS",
+  },
+  description:
+    "Reporta emergencias de agua, consulta alertas de tu comunidad y da seguimiento a tu caso.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -25,10 +31,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="h-full overflow-hidden">
-        <ConvexClientProvider>
-          <AppShell>{children}</AppShell>
-        </ConvexClientProvider>
+      <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
+        <ClerkProvider>
+          <ConvexClientProvider>
+            <Header />
+            <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+            <Footer />
+          </ConvexClientProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

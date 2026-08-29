@@ -1,6 +1,6 @@
-# Contra Corriente (aguaSOS)
+# aguaSOS
 
-Aplicación Next.js 16 + Convex para reportes hídricos.
+Aplicación para reportar emergencias de agua, ver alertas de la comunidad y dar seguimiento a un caso. Frontend Next.js 16, backend Convex y mapa MapLibre.
 
 ## Cómo empezar
 
@@ -20,6 +20,17 @@ npm run dev
 ```
 
 Abre [http://localhost:3000](http://localhost:3000).
+
+## Páginas
+
+- `/` — inicio
+- `/mapa` — mapa MapLibre (OpenFreeMap)
+- `/reportar` — formulario de emergencia
+- `/alertas` — reportes recientes
+- `/recursos` — qué hacer mientras llega ayuda
+- `/seguimiento` — consulta por código SOS
+
+Los reportes de emergencia se guardan en el navegador (localStorage) en esta primera versión.
 
 ## Scripts
 
