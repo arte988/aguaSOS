@@ -2,6 +2,11 @@
 
 import dynamic from "next/dynamic";
 import type { MapaBaseProps } from "./mapa-contrato";
+import { precargarCartografiaEnIdle } from "./precargar";
+
+if (typeof window !== "undefined") {
+  precargarCartografiaEnIdle();
+}
 
 const DynamicMapCanvas = dynamic<MapaBaseProps>(
   () => import("./MapaCanvas").then((module) => module.MapCanvas),

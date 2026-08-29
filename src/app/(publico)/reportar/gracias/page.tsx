@@ -19,6 +19,13 @@ export default async function Page({
   const puntoValido = Number.isFinite(lat) && Number.isFinite(lng);
   const folio = folioCrudo?.trim() || null;
 
+  const mapaHref =
+    puntoValido && folio
+      ? `/mapa?lat=${lat}&lng=${lng}&reporteId=${encodeURIComponent(folio)}`
+      : puntoValido
+        ? `/mapa?lat=${lat}&lng=${lng}`
+        : "/mapa";
+
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-4 py-8">
       {puntoValido ? (
@@ -43,6 +50,15 @@ export default async function Page({
           Estos son los suministradores más cercanos. El botón llama directo.
         </p>
       </header>
+
+      {puntoValido ? (
+        <Link
+          href={mapaHref}
+          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-pozo px-4 text-base font-semibold text-white hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pozo"
+        >
+          Ver reporte en el mapa
+        </Link>
+      ) : null}
 
       <Link
         href="/reportar"

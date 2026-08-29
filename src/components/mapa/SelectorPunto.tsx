@@ -28,6 +28,7 @@ export function SelectorPunto({
         onMapClick={(point) => onChange({ lat: point.lat, lng: point.lng })}
         onMarkerDragEnd={(point) => onChange({ lat: point.lat, lng: point.lng })}
         showMarker
+        markerDraggable
       >
         <div className="pointer-events-none absolute left-3 top-3 rounded-lg bg-white/90 px-3 py-2 text-xs text-slate-700 shadow-sm">
           Tocá el mapa para marcar el punto o arrastrá el marcador.

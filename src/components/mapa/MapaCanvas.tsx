@@ -4,18 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import {
   Map,
   Marker,
-  setWorkerUrl,
   type MapMouseEvent,
   type Map as MapLibreMap,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
-// maplibre-gl 6 ships el worker como archivo aparte (5.x lo empotraba): hay que
-// apuntarlo a la copia que `scripts/copy-maplibre-worker.mjs` deja en /public.
-// Relativa a la página, para que sobreviva a un despliegue con basePath.
-if (typeof window !== "undefined") {
-  setWorkerUrl(new URL("/maplibre/maplibre-gl-worker.mjs", window.location.href).toString());
-}
+// maplibre-gl 6 embebe el worker en el bundle principal (blob URL). No llamar
+// setWorkerUrl salvo que exista una copia en /public — el script predev ya no
+// genera maplibre-gl-worker.mjs en esta versión.
 import { MAP_BOUNDS, MAP_CENTER, MAP_INITIAL_ZOOM, MAP_MAX_ZOOM, MAP_MIN_ZOOM, OPENFREEMAP_STYLE_URL } from "./tiles";
 import type { MapaBaseProps } from "./mapa-contrato";
 import { MapRuntimeProvider, getGeoJsonSource, useMapRuntime, type MapRuntime, type MapStatus } from "./mapa-contexto";
@@ -38,6 +34,10 @@ function MapInstance({
   ariaLabel = "Mapa de El Salvador",
   center = MAP_CENTER,
   initialZoom = MAP_INITIAL_ZOOM,
+  focusPoint,
+  focusZoom = 14,
+  markerDraggable = false,
+  bordeRedondeado = true,
   onViewportChange,
   onMapClick,
   selectedPoint,
@@ -67,6 +67,14 @@ function MapInstance({
     if (!container) return;
 
     let styleReady = false;
+    const marcarListo = () => {
+      if (styleReady) return;
+      styleReady = true;
+      setFatalError(null);
+      setStatus("ready");
+      callbacksRef.current.onViewportChange?.(getBoundingBox(instance));
+    };
+
     const instance = new Map({
       container,
       style: OPENFREEMAP_STYLE_URL,
@@ -74,6 +82,7 @@ function MapInstance({
       zoom: initialZoom,
       minZoom: MAP_MIN_ZOOM,
       maxZoom: MAP_MAX_ZOOM,
+      fadeDuration: 0,
       maxBounds: [
         [MAP_BOUNDS.west, MAP_BOUNDS.south],
         [MAP_BOUNDS.east, MAP_BOUNDS.north],
@@ -81,10 +90,10 @@ function MapInstance({
     });
 
     const handleLoad = () => {
-      styleReady = true;
-      setFatalError(null);
-      setStatus("ready");
-      callbacksRef.current.onViewportChange?.(getBoundingBox(instance));
+      marcarListo();
+    };
+    const handleStyleData = () => {
+      if (instance.isStyleLoaded()) marcarListo();
     };
     const handleMoveEnd = () => {
       callbacksRef.current.onViewportChange?.(getBoundingBox(instance));
@@ -103,6 +112,7 @@ function MapInstance({
     };
 
     instance.on("load", handleLoad);
+    instance.on("styledata", handleStyleData);
     instance.on("moveend", handleMoveEnd);
     instance.on("click", handleMapClick);
     instance.on("error", handleError);
@@ -110,6 +120,7 @@ function MapInstance({
 
     return () => {
       instance.off("load", handleLoad);
+      instance.off("styledata", handleStyleData);
       instance.off("moveend", handleMoveEnd);
       instance.off("click", handleMapClick);
       instance.off("error", handleError);
@@ -126,6 +137,11 @@ function MapInstance({
   }, [map]);
 
   useEffect(() => {
+    if (!map || status !== "ready" || !focusPoint || !isValidPoint(focusPoint)) return;
+    map.easeTo({ center: [focusPoint.lng, focusPoint.lat], zoom: focusZoom, duration: 800 });
+  }, [focusPoint?.lat, focusPoint?.lng, focusZoom, map, status]);
+
+  useEffect(() => {
     const point = selectedPoint;
     if (!map || status !== "ready" || !showMarker || !point || !isValidPoint(point)) {
       markerRef.current?.remove();
@@ -135,19 +151,22 @@ function MapInstance({
 
     const position: [number, number] = [point.lng, point.lat];
     if (!markerRef.current) {
-      const marker = new Marker({ color: "#b91c1c", draggable: true })
+      const marker = new Marker({ color: "#0369a1", draggable: markerDraggable })
         .setLngLat(position)
         .addTo(map);
-      marker.on("dragend", () => {
-        const dragged = marker.getLngLat();
-        callbacksRef.current.onMarkerDragEnd?.({ lat: dragged.lat, lng: dragged.lng });
-      });
+      if (markerDraggable) {
+        marker.on("dragend", () => {
+          const dragged = marker.getLngLat();
+          callbacksRef.current.onMarkerDragEnd?.({ lat: dragged.lat, lng: dragged.lng });
+        });
+      }
       markerRef.current = marker;
       return;
     }
 
     markerRef.current.setLngLat(position);
-  }, [map, selectedPoint, showMarker, status]);
+    markerRef.current.setDraggable(markerDraggable);
+  }, [map, markerDraggable, selectedPoint, showMarker, status]);
 
   const runtime: MapRuntime = {
     map,
@@ -158,7 +177,9 @@ function MapInstance({
 
   return (
     <MapRuntimeProvider value={runtime}>
-      <div className="relative h-full min-h-80 w-full overflow-hidden rounded-2xl bg-sky-100">
+      <div
+        className={`relative h-full min-h-80 w-full overflow-hidden bg-sky-100 ${bordeRedondeado ? "rounded-2xl" : ""}`}
+      >
         <div
           ref={containerRef}
           className="absolute inset-0 h-full w-full outline-none focus-visible:ring-2 focus-visible:ring-sky-700 focus-visible:ring-inset"

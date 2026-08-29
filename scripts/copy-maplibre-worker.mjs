@@ -18,7 +18,7 @@ for (const file of ["maplibre-gl-worker.mjs", "maplibre-gl-shared.mjs"]) {
   }
 }
 if (copied === 0) {
-  // maplibre-gl 5.x bundles its worker inline; the local copies are only
-  // needed for versions that ship a separate worker file.
+  // maplibre-gl 6+ embebe el worker en el bundle (blob URL). Los archivos
+  // maplibre-gl-worker.mjs / maplibre-gl-shared.mjs solo existían en 5.x.
   console.log("maplibre-gl bundles its worker inline; skipping worker copy");
 }

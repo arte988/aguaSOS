@@ -4,6 +4,7 @@ import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { precargarCartografia } from "@/components/mapa/precargar";
 
 const NAV = [
   { href: "/", label: "Inicio" },
@@ -37,6 +38,8 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
+                onMouseEnter={item.href === "/mapa" ? precargarCartografia : undefined}
+                onFocus={item.href === "/mapa" ? precargarCartografia : undefined}
                 className={`rounded-full px-3 py-2 text-sm font-medium transition ${
                   active
                     ? "bg-sky-100 text-sky-900"
@@ -103,6 +106,7 @@ export function Header() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
+                onTouchStart={item.href === "/mapa" ? precargarCartografia : undefined}
                 className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-sky-50"
               >
                 {item.label}

@@ -17,6 +17,7 @@ import { IMPACTOS, RANGOS_PERSONAS } from "../_lib/constantes";
 import { hoyLocalYmd, ymdAEpochMsLocal } from "../_lib/fechas";
 import { puntoListo } from "../_lib/tipos";
 import { useEnviarReporte } from "../_lib/useEnviarReporte";
+import { guardarReporteDestacado } from "@/lib/reporteDestacado";
 import {
   ENLACES_ERROR,
   ORDEN_ERRORES,
@@ -118,12 +119,24 @@ export function FormularioReporte() {
 
       borrarBorrador();
 
+      guardarReporteDestacado({
+        reporteId: resultado.reporteId,
+        lat: punto.lat,
+        lng: punto.lng,
+        personasRango,
+        impacto,
+        escasezDesde: ymdAEpochMsLocal(escasezDesde),
+        menores: menoresNumero,
+        ...(canton.trim() ? { canton: canton.trim() } : {}),
+        creadoEn: Date.now(),
+      });
+
       const params = new URLSearchParams({
         lat: String(punto.lat),
         lng: String(punto.lng),
         reporteId: resultado.reporteId,
       });
-      router.push(`/reportar/gracias?${params.toString()}`);
+      router.push(`/mapa?${params.toString()}`);
     } catch (err) {
       setErrorRed(
         err instanceof Error

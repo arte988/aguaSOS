@@ -3,9 +3,11 @@ import type {
   CartographyCollections,
   DateRange,
   EmergencyCollection,
+  GeoJsonFeature,
   GeoJsonPoint,
   Punto,
   RiskCollection,
+  RiskProperties,
   SourceCollection,
 } from "./tipos";
 
@@ -201,6 +203,59 @@ function isCalendarDate(value: string) {
   const [year, month, day] = value.split("-").map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
   return date.toISOString().slice(0, 10) === value;
+}
+
+export type ReporteParaRiesgo = {
+  reporteId: string;
+  lat: number;
+  lng: number;
+  personasRango: "1-5" | "6-20" | "21-100" | "101-500" | "500+";
+  impacto: "casa" | "pasaje" | "comunidad";
+  creadoEn: number;
+};
+
+const PESO_POR_RANGO: Record<ReporteParaRiesgo["personasRango"], number> = {
+  "1-5": 2,
+  "6-20": 5,
+  "21-100": 12,
+  "101-500": 20,
+  "500+": 35,
+};
+
+const MULTIPLICADOR_IMPACTO: Record<ReporteParaRiesgo["impacto"], number> = {
+  casa: 1,
+  pasaje: 1.2,
+  comunidad: 1.5,
+};
+
+/** Peso para el heatmap, alineado con la escala fija de CapaRiesgo (máx. 60). */
+export function pesoDesdeReporte(reporte: ReporteParaRiesgo): number {
+  const base = PESO_POR_RANGO[reporte.personasRango];
+  return Math.min(60, Math.round(base * MULTIPLICADOR_IMPACTO[reporte.impacto]));
+}
+
+export function mezclarReporteEnRiesgo(
+  collection: RiskCollection,
+  reporte: ReporteParaRiesgo | null,
+): RiskCollection {
+  if (!reporte) return collection;
+
+  const feature: GeoJsonFeature<RiskProperties> = {
+    type: "Feature",
+    id: reporte.reporteId,
+    geometry: { type: "Point", coordinates: [reporte.lng, reporte.lat] },
+    properties: {
+      reportId: reporte.reporteId,
+      weight: pesoDesdeReporte(reporte),
+      createdAt: new Date(reporte.creadoEn).toISOString(),
+    },
+  };
+
+  const sinDuplicado = collection.features.filter(
+    (item) => item.properties.reportId !== reporte.reporteId,
+  );
+
+  return { type: "FeatureCollection", features: [feature, ...sinDuplicado] };
 }
 
 
