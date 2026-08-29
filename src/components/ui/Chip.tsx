@@ -15,7 +15,7 @@ export function Chip({
   children: ReactNode;
 }) {
   const base =
-    "inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chorro disabled:cursor-not-allowed disabled:opacity-60";
+    "inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chorro disabled:cursor-not-allowed disabled:opacity-60";
 
   const reposo: Record<Tono, string> = {
     neutro: "border border-pila bg-papel text-pozo",

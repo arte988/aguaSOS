@@ -57,7 +57,7 @@ export const SEED_ALERTS: WaterReport[] = [
     address: "Varios sectores",
     description: "Corte de agua desde la madrugada. Varias manzanas sin servicio.",
     peopleAffected: 120,
-    createdAt: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
+    createdAt: "2026-08-29T12:30:00.000Z",
     status: "en_revision",
   },
   {
@@ -71,7 +71,7 @@ export const SEED_ALERTS: WaterReport[] = [
     address: "Calle principal, frente al parque",
     description: "Fuga visible en la vía pública. El agua está corriendo hacia la calle.",
     peopleAffected: 40,
-    createdAt: new Date(Date.now() - 1000 * 60 * 40).toISOString(),
+    createdAt: "2026-08-29T13:20:00.000Z",
     status: "recibido",
   },
 ];
@@ -95,18 +95,18 @@ export function getStoredReports(): WaterReport[] {
 export function saveReport(report: WaterReport) {
   const reports = [report, ...getStoredReports()];
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
+  emitirReportes();
   return report;
 }
 
-export function getAllReports(): WaterReport[] {
-  return [...getStoredReports(), ...SEED_ALERTS].sort(
+function ordenarPorFecha(reports: WaterReport[]): WaterReport[] {
+  return [...reports].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 }
 
-export function findReport(code: string) {
-  const normalized = code.trim().toUpperCase();
-  return getAllReports().find((report) => report.code.toUpperCase() === normalized);
+export function getAllReports(): WaterReport[] {
+  return ordenarPorFecha([...getStoredReports(), ...SEED_ALERTS]);
 }
 
 export function formatDate(iso: string) {
@@ -114,4 +114,38 @@ export function formatDate(iso: string) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(iso));
+}
+
+// Almacén para que las vistas vivas (AlertsList) reaccionen a cambios.
+const listeners = new Set<() => void>();
+let cacheReportes: WaterReport[] | null = null;
+
+function emitirReportes() {
+  // Invalidar antes de notificar: useSyncExternalStore vuelve a leer el
+  // snapshot y sin esto recibiría la misma referencia y no re-renderizaría.
+  cacheReportes = null;
+  listeners.forEach((listener) => listener());
+}
+
+export function suscribirReportes(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+export function leerReportesCliente(): WaterReport[] {
+  // ponytail: caché por sesión; si otra pestaña escribe reportes, queda obsoleta.
+  // Subir: escuchar el evento `storage` e invalidar la caché.
+  cacheReportes ??= getAllReports();
+  return cacheReportes;
+}
+
+// getServerSnapshot debe devolver siempre la misma referencia Y coincidir con
+// el HTML del servidor. Este módulo también se evalúa en el navegador, así que
+// no puede mirar localStorage: sería N+2 al hidratar contra los 2 del SSR.
+const REPORTES_SERVIDOR: WaterReport[] = ordenarPorFecha(SEED_ALERTS);
+
+export function leerReportesServidor(): WaterReport[] {
+  return REPORTES_SERVIDOR;
 }

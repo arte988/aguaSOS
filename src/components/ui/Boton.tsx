@@ -13,7 +13,7 @@ export function Boton({
   children: ReactNode;
 }) {
   const base =
-    "inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl px-4 text-base font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60";
+    "inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl px-4 text-base font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60";
 
   const estilos: Record<Variante, string> = {
     primario:

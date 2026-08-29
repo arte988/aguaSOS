@@ -41,7 +41,7 @@ export default async function Page({
 
       <Link
         href="/reportar"
-        className="inline-flex min-h-11 items-center justify-center text-base font-semibold text-sky-800 underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 dark:text-sky-300"
+        className="inline-flex min-h-11 items-center justify-center text-base font-semibold text-sky-800 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 dark:text-sky-300"
       >
         Enviar otro reporte
       </Link>

@@ -40,3 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .clerk/
+
+# generado por scripts/copy-maplibre-worker.mjs
+/public/maplibre/maplibre-gl-worker.mjs
+/public/maplibre/maplibre-gl-shared.mjs

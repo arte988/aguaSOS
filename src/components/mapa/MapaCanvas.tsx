@@ -4,10 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import {
   Map,
   Marker,
+  setWorkerUrl,
   type MapMouseEvent,
   type Map as MapLibreMap,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+
+// maplibre-gl 6 ships el worker como archivo aparte (5.x lo empotraba): hay que
+// apuntarlo a la copia que `scripts/copy-maplibre-worker.mjs` deja en /public.
+// Relativa a la página, para que sobreviva a un despliegue con basePath.
+if (typeof window !== "undefined") {
+  setWorkerUrl(new URL("/maplibre/maplibre-gl-worker.mjs", window.location.href).toString());
+}
 import { MAP_BOUNDS, MAP_CENTER, MAP_INITIAL_ZOOM, MAP_MAX_ZOOM, MAP_MIN_ZOOM, OPENFREEMAP_STYLE_URL } from "./tiles";
 import type { MapaBaseProps } from "./mapa-contrato";
 import { MapRuntimeProvider, getGeoJsonSource, useMapRuntime, type MapRuntime, type MapStatus } from "./mapa-contexto";
@@ -177,7 +185,7 @@ function MapInstance({
               <button
                 type="button"
                 onClick={onRetry}
-                className="mt-4 min-h-11 rounded-xl bg-sky-700 px-4 text-sm font-semibold text-white hover:bg-sky-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
+                className="mt-4 min-h-11 rounded-xl bg-sky-700 px-4 text-sm font-semibold text-white hover:bg-sky-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
               >
                 Reintentar
               </button>
@@ -212,7 +220,7 @@ function MapControls({ center, initialZoom }: { center: Punto; initialZoom: numb
         aria-label="Acercar mapa"
         title="Acercar"
         onClick={() => runtime.map?.zoomIn()}
-        className="min-h-11 min-w-11 border-b border-slate-200 text-xl font-semibold text-sky-950 hover:bg-sky-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sky-700"
+        className="min-h-11 min-w-11 border-b border-slate-200 text-xl font-semibold text-sky-950 hover:bg-sky-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-sky-700"
       >
         +
       </button>
@@ -221,7 +229,7 @@ function MapControls({ center, initialZoom }: { center: Punto; initialZoom: numb
         aria-label="Alejar mapa"
         title="Alejar"
         onClick={() => runtime.map?.zoomOut()}
-        className="min-h-11 min-w-11 border-b border-slate-200 text-xl font-semibold text-sky-950 hover:bg-sky-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sky-700"
+        className="min-h-11 min-w-11 border-b border-slate-200 text-xl font-semibold text-sky-950 hover:bg-sky-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-sky-700"
       >
         −
       </button>
@@ -230,7 +238,7 @@ function MapControls({ center, initialZoom }: { center: Punto; initialZoom: numb
         aria-label="Volver al centro de El Salvador"
         title="Centrar mapa"
         onClick={() => runtime.map?.easeTo({ center: [center.lng, center.lat], zoom: initialZoom })}
-        className="min-h-11 min-w-11 px-2 text-xs font-semibold text-sky-800 hover:bg-sky-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sky-700"
+        className="min-h-11 min-w-11 px-2 text-xs font-semibold text-sky-800 hover:bg-sky-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-sky-700"
       >
         SV
       </button>
