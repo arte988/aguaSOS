@@ -1,235 +1,211 @@
-# Reparto del trabajo — 5 personas, 3 h 30 min
+# Reparto del trabajo — 5 personas, 3 vías paralelas
 
-> **Este documento reemplaza al plan de 20 días.** El anterior sigue en el historial
-> (commit `7c93c14`) y sirve para después del hackathon. Para hoy no sirve: pedía ~700
-> horas-persona y quedan **17,5** (3,5 h × 5).
->
-> Estado real del repo al escribir esto: `create-next-app` sin tocar, sin `convex`,
-> sin `@clerk/nextjs`, sin `maplibre-gl`. Todo lo de abajo se construye desde cero.
+Dos plazas ya están asignadas:
+
+| Plaza | Territorio | Nadie más lo toca |
+|---|---|---|
+| **Auth** | Clerk, `src/proxy.ts`, `convex/auth.config.ts`, `src/app/layout.tsx` (providers) | ✔ |
+| **Convex** | Todo `convex/**`, `tsconfig.json` (alias), el algoritmo de riesgo | ✔ |
+
+Quedan **tres personas para el resto**, que es el frontend completo más la PWA.
 
 ---
 
-## 0. La única pregunta que importa
+## El principio que evita los choques
 
-**¿Qué ve el jurado?** Esto, y nada más:
+No se reparte por *feature*, se reparte por **fichero**. Dos personas con features distintas
+que editan el mismo `layout.tsx` chocan igual. La regla es:
 
-> Un vecino sin cuenta abre la app, marca su casa en el mapa, dice cuántas personas
-> están sin agua y lo envía. Acto seguido ve los tres suministradores más cercanos con
-> su teléfono. Cambiamos a la vista de mapa y su reporte ya está pintado; el distrito
-> con más reportes está en rojo.
+> **Un fichero, un dueño.** Un componente, un fichero.
+> Si necesitás tocar un fichero que no es tuyo, no lo tocás: pedís la firma.
 
-Todo lo que no sea ese guion **se corta**. No se pospone: se corta hoy y no se menciona.
+Con eso, un conflicto de git es estructuralmente improbable. Lo que sí puede pasar es que
+alguien **espere** a otro — y eso se resuelve con los contratos del día 1 (§4).
 
-### La lista de cortes
+---
 
-| Se corta | Por qué |
+## 1. Las tres vías
+
+### Vía 1 · Captura
+**El reporte y todo lo que lo hace llegar.** Es el camino crítico del producto y la vía
+más cargada.
+
+| Posee | |
 |---|---|
-| **Cola offline, IndexedDB, service worker, manifest** | Dos días de trabajo. Es la mitad cara de la Etapa 4 y no aparece en el guion. |
-| **`claveIdempotencia`** | Existía *para* la cola offline. Sin cola, un `disabled` en el botón cubre el doble clic. |
-| **Pipeline de PMTiles** | Se sustituye por tiles raster de OSM: 10 líneas, sin key, sin build. Ver §4. |
-| **Tabla `zonas` + seed de 14 dept / 44 mun / distritos** | Pasa a ser un array TS de ~12 distritos con centroide, en `convex/model/constantes.ts`. |
-| **Tabla `riesgoZona` + `crons.ts` + `alertasEmergencia`** | El riesgo se calcula **al leer**, en la query del mapa. Elimina el recálculo transaccional, el cron y una tabla. |
-| **Onboarding, roles, guard, `mis-reportes`, admin** | Nada de esto sale en el guion. |
-| **Tablero analítico, filtros de fecha, leyenda** | Ídem. |
-| **CSV, API keys, `/v1`, moderación** | Ya estaban fuera del MVP. |
-| **Formulario multipaso (5 pasos)** | Una sola página con todos los campos. El multipaso es 3× el código y 0× la demo. |
+| `src/app/(publico)/reportar/**` | formulario multipaso + `_components/` |
+| `src/app/(publico)/reportar/gracias/**` | confirmación + fuentes cercanas |
+| `src/lib/colaOffline.ts` | cola IndexedDB |
+| `src/hooks/useColaOffline.ts` | encolar / vaciar |
+| `src/components/EstadoConexion.tsx` | banner + contador de pendientes |
+| `src/app/manifest.ts` · `public/sw.js` | PWA |
+| `next.config.ts` | **un solo edit**: `experimental.useOffline` |
 
-El esquema baja de **7 tablas a 2**: `reportesEscasez` y `fuentesSuministro`
-(+ `usuarios` solo si Clerk sobrevive al §5).
+**Por qué el formulario y la cola offline van juntos:** la cola existe *para* el formulario.
+Separarlos obliga a dos personas a negociar el traspaso de la `claveIdempotencia` a través de
+una frontera de equipo — que es justo donde se rompe la idempotencia y el mapa acaba
+duplicando reportes.
 
-> `ponytail:` el riesgo por distrito se calcula recorriendo todos los reportes en cada
-> lectura del mapa.
-> *Techo:* O(reportes totales) por render — irrelevante con las decenas de filas de hoy.
-> *Upgrade path:* la tabla `riesgoZona` materializada que ya está diseñada en
-> `modelo-datos.md`.
+**Consume de otros:** `<SelectorPunto>` (Vía 2), `Boton`/`Campo`/`Chip` (Vía 3),
+`reportes.crear` y `fuentes.masCercanas` (Convex).
 
 ---
 
-## 1. Los primeros 20 minutos (bloqueantes — nadie escribe UI hasta que esto exista)
+### Vía 2 · Cartografía
+**MapLibre y las tres capas.** Es una habilidad autocontenida y el bundle más pesado de la
+aplicación: un solo dueño, un solo sitio.
 
-| Min | Quién | Qué | Cómo se sabe que está |
-|---|---|---|---|
-| **0–3** | Convex | `npm i convex maplibre-gl @clerk/nextjs`, commit `chore: deps`, publicar | Los otros 4 actualizan **antes de escribir una línea** |
-| **3–8** | Convex | `npx convex dev`, commitear `convex/_generated`, y **pegar `NEXT_PUBLIC_CONVEX_URL` y `CONVEX_DEPLOYMENT` en el chat del equipo** | Los 5 apuntan al **mismo** deployment. Si no, el mapa de la Vía 2 nunca verá los reportes de la Vía 1. |
-| **8–20** | Convex | `schema.ts` (2 tablas), `model/constantes.ts` (distritos, rangos, tipos), y **firmas vacías** de las 5 funciones | Las vías importan `api.*` y compila |
-| **8–20** | Vía 2 | `SelectorPunto` con su firma final, cuerpo = recuadro gris con dos inputs | Vías 1 y 3 escriben contra ella desde el minuto 20 |
-| **8–20** | Vía 3 | `Boton` y `Campo`. Dos componentes. No hay tercero. | |
+| Posee | |
+|---|---|
+| `src/components/mapa/**` | `MapaBase`, `CapaRiesgo`, `CapaEmergencia`, `CapaFuentes`, `SelectorPunto`, `tipos.ts`, `tiles.ts` |
+| `src/app/(publico)/mapa/**` | mapa público de fuentes |
+| `src/app/(app)/tablero/**` | mapa analítico + filtros de fecha |
+| `public/tiles/**` | el pipeline de `.pmtiles` |
 
-**A partir del minuto 20 nadie espera a nadie.** Ese es el único objetivo de este bloque.
+**Entrega antes que nada** (día 1) la firma final de `SelectorPunto`, aunque el cuerpo sea un
+recuadro gris con dos inputs. Dos vías dependen de ella.
 
-Las 5 funciones de Convex, con su firma cerrada al minuto 20:
+**Consume de otros:** `convex/model/riesgo.ts` para pintar el peso decaído (import de solo
+lectura), y las tres queries GeoJSON de Convex.
 
-```ts
-reportes.crear      (datos del formulario)     → Id<"reportesEscasez">
-reportes.mapa       ()                         → GeoJSON FeatureCollection, peso ya calculado
-fuentes.crear       (datos del alta)           → Id<"fuentesSuministro">
-fuentes.listar      ()                         → GeoJSON FeatureCollection
-fuentes.masCercanas ({ lat, lng, n: 3 })       → Fuente[]
-```
+---
+
+### Vía 3 · Cuentas y shell
+**Todo lo que rodea a una sesión iniciada**, más las primitivas visuales.
+
+| Posee | |
+|---|---|
+| `src/app/(auth)/**` | páginas de ingreso, registro y onboarding |
+| `src/app/(app)/layout.tsx` | shell, navegación por rol, guard |
+| `src/app/(app)/mis-reportes/**` | historial con el peso decaído visible |
+| `src/app/(app)/fuentes/**` | alta y gestión de fuentes de suministro |
+| `src/app/(app)/admin/**` | aprobación de cuentas |
+| `src/components/ui/**` | `Boton`, `Campo`, `Chip` — y nada más hasta la semana 3 |
+| `src/app/globals.css` | tokens de Tailwind, congelado tras el día 2 |
+| `src/lib/formato.ts` | fechas y números en es-SV |
+
+Ojo con la frontera: la persona de **Auth** posee la *configuración* de Clerk
+(`proxy.ts`, providers, JWT template). La Vía 3 posee las *pantallas* que hay detrás.
+
+**Consume de otros:** `<SelectorPunto>` para el alta de fuente, y las mutations de usuarios y
+fuentes.
+
+---
+
+## 2. Ficheros compartidos: dueño y regla
+
+Estos son los únicos puntos donde dos personas podrían chocar. Cada uno tiene un dueño
+nombrado y una fecha de congelación.
+
+| Fichero | Dueño | Regla |
+|---|---|---|
+| `src/app/layout.tsx` | Auth | Se escribe el día 1 (providers + fuentes) y **se congela**. |
+| `src/proxy.ts` | Auth | Nadie más lo abre. |
+| `convex/**` | Convex | Las vías solo importan el `api` generado. |
+| `tsconfig.json` | Convex | Añade el alias `@convex/*` el día 1. |
+| `package.json` | Vía 3 coordina | **Todas** las dependencias se añaden en un solo commit el día 1. Después, quien necesite una avisa antes. |
+| `next.config.ts` | Vía 1 | Un único edit en todo el proyecto. |
+| `src/app/globals.css` | Vía 3 | Tokens el día 1–2, congelado después. |
+| `public/sw.js` | Vía 1 | Vía 2 **no** lo edita — ver §5. |
+
+---
+
+## 3. Quién define qué
+
+Los choques semánticos duelen más que los de git: dos formateadores de fecha distintos no dan
+conflicto en el merge, dan un bug en la demo. Un dueño por concepto.
+
+| Concepto | Lo define | Los demás |
+|---|---|---|
+| El tipo `Punto { lat, lng }` | Vía 2 · `components/mapa/tipos.ts` | importan |
+| Color de cada nivel de riesgo | Vía 2 · `components/mapa/tipos.ts` | Vía 3 lo usa en el badge |
+| Fechas y números en es-SV | Vía 3 · `lib/formato.ts` | importan |
+| Rangos de personas, tipos de suministro, niveles de impacto | Convex · `model/constantes.ts` | los tres importan |
+| Peso decaído de un reporte | Convex · `model/riesgo.ts` | Vía 2 lo pinta, Vía 3 lo muestra |
+| Copys en español | Vía 3 | los tres proponen, Vía 3 unifica |
+
+Nadie redefine un concepto de otro. Si te falta un campo, lo pedís al dueño.
+
+---
+
+## 4. Los contratos del día 1
+
+Esto es lo único que puede dejar a alguien parado. Todo tiene que existir —aunque sea
+vacío— antes de que termine el día 2.
+
+| Contrato | Lo publica | Día |
+|---|---|---|
+| Firmas vacías (`return null`) de **todas** las queries y mutations | Convex | 1 |
+| `convex/model/constantes.ts` con enums y rangos | Convex | 1 |
+| `src/app/layout.tsx` con `ClerkProvider` + `ConvexProviderWithClerk` | Auth | 1 |
+| `src/proxy.ts` funcionando con Clerk | Auth | 1–2 |
+| `<SelectorPunto>` con su firma final, cuerpo stub | Vía 2 | 1 |
+| Tokens de Tailwind + `Boton`, `Campo`, `Chip` | Vía 3 | 2 |
+| Todas las dependencias instaladas en un commit | Vía 3 | 1 |
+
+La firma de `SelectorPunto`, que es la más consumida:
 
 ```tsx
 // src/components/mapa/SelectorPunto.tsx — dueño: Vía 2
-export type Punto = { lat: number; lng: number };
 export function SelectorPunto(props: {
   valor: Punto | null;
-  onChange: (p: Punto) => void;
+  onChange: (p: Punto & { precisionM?: number }) => void;
+  centroInicial?: Punto;
 }): React.ReactNode;
 ```
 
-> **`reportes.mapa` devuelve el peso ya decaído dentro del GeoJSON.** Así `riesgo.ts` vive
-> solo en el servidor y la Vía 2 no importa nada de `convex/model/`. Una dependencia entre
-> vías menos que en el plan de 20 días.
+Vías 1 y 3 escriben contra esa firma desde el día 1. Vía 2 le pone el mapa el día 3.
+Es el mismo patrón que usa Convex con sus funciones vacías: **la firma primero, el cuerpo
+después**, y así nadie espera a nadie.
 
 ---
 
-## 2. Las tres vías (minuto 20 → 150)
+## 5. El único choque real: la semana 4
 
-La regla del plan anterior sobrevive intacta, y hoy importa más que nunca:
+En la etapa offline, Vía 1 escribe `public/sw.js` y Vía 2 quiere que ese service worker
+cachee los tiles del mapa. Es el único punto del plan donde dos vías necesitan el mismo
+fichero.
 
-> **Un fichero, un dueño.** Si necesitás tocar un fichero ajeno, no lo tocás: pedís la firma.
-
-### Vía 1 · Reporte — *el camino crítico*
-
-| Fichero | |
-|---|---|
-| `src/app/reportar/page.tsx` | formulario de una sola página |
-| `src/app/reportar/gracias/page.tsx` | confirmación + las 3 fuentes más cercanas con teléfono |
-
-Campos, y solo estos: punto (`<SelectorPunto>`) · rango de personas · menores ·
-impacto (casa / pasaje / comunidad) · desde cuándo. La afectación económica es **un
-textarea opcional**, no la unión discriminada de `modelo-datos.md`.
-
-Consume: `<SelectorPunto>` (V2), `Boton` y `Campo` (V3), `reportes.crear` y
-`fuentes.masCercanas` (Convex).
-
-**Orden:** que el formulario envíe y guarde antes del minuto 90. La pantalla de gracias
-después. Un formulario que guarda sin pantalla bonita es demo; una pantalla bonita que no
-guarda no es nada.
-
----
-
-### Vía 2 · Mapa
-
-| Fichero | |
-|---|---|
-| `src/components/mapa/SelectorPunto.tsx` | **primero, stub, minuto 20** |
-| `src/components/mapa/MapaBase.tsx` | MapLibre + estilo raster de OSM (§4) |
-| `src/components/mapa/CapaRiesgo.tsx` | capa `heatmap`, `heatmap-weight` = `peso` del GeoJSON |
-| `src/components/mapa/CapaFuentes.tsx` | marcadores con popup: nombre y teléfono |
-| `src/app/mapa/page.tsx` | el mapa público |
-
-**Orden:** stub (min 20) → `MapaBase` que renderiza (min 60) → `SelectorPunto` real
-(min 90, desbloquea a V1 y V3) → capas (min 150).
-
-Si a la hora `MapaBase` no pinta, decilo en voz alta: es el mayor riesgo del plan y hay
-un plan B en §5.
-
----
-
-### Vía 3 · Fuentes, portada y demo
-
-| Fichero | |
-|---|---|
-| `src/components/ui/Boton.tsx` · `Campo.tsx` | **primero, minuto 20**. Dos. No hay tercero. |
-| `src/app/page.tsx` | portada: título y dos botones grandes, *Reportar* y *Ver el mapa* |
-| `src/app/fuentes/nueva/page.tsx` | alta de fuente — cierra el ciclo del guion |
-| `src/app/globals.css` | tokens; congelado en el minuto 40 |
-| `scripts/datos-demo.ts` | **el entregable que siempre se olvida** — ver §3 |
-
-Vía 3 es además quien **integra**: actualiza desde el tronco cada 15 minutos, es la
-primera en detectar que algo no compila, y es la dueña del ensayo final.
-
----
-
-## 3. Los datos de demo no son opcionales
-
-Un mapa vacío no demuestra nada, y sembrarlo a mano delante del jurado se ve fatal.
-Vía 3 escribe, entre el minuto 60 y el 120, un script que inserte:
-
-- **~25 reportes** repartidos en 4 distritos, con `_creationTime` escalonado entre hoy y
-  hace 20 días — así el decaimiento se **ve** en el mapa.
-- **Un distrito claramente en rojo** (8–10 reportes de `comunidad`, recientes). Ese es el
-  que se enseña.
-- **6 fuentes de suministro** con teléfonos plausibles, dos de ellas cerca del punto que
-  se va a marcar en el formulario durante la demo — para que `fuentes.masCercanas`
-  devuelva algo bonito.
-
-Se corre en el minuto 150, después del freeze. Antes no: cualquier cambio de esquema lo
-invalida.
-
----
-
-## 4. El estilo del mapa, para que la Vía 2 no pierda 30 minutos
-
-Sin PMTiles, sin key, sin cuenta. Pegar tal cual:
+**Resolución:** `sw.js` es de Vía 1, sin excepciones. Vía 2 expone lo que quiere cachear:
 
 ```ts
-// src/components/mapa/estilo.ts — dueño: Vía 2
-export const ESTILO = {
-  version: 8,
-  sources: {
-    osm: {
-      type: "raster",
-      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-      tileSize: 256,
-      attribution: "© OpenStreetMap",
-    },
-  },
-  layers: [{ id: "osm", type: "raster", source: "osm" }],
-} as const;
-
-export const CENTRO_SV = { lng: -88.9, lat: 13.75, zoom: 8 };
+// src/components/mapa/tiles.ts — dueño: Vía 2
+export const URLS_A_CACHEAR: string[] = [ /* estilo, sprite, glyphs, pmtiles */ ];
 ```
 
-> `ponytail:` tiles raster públicos de OSM, sin caché propia.
-> *Techo:* la política de uso de OSM no admite tráfico de producción, y sin red no hay mapa.
-> *Upgrade path:* el pipeline de `.pmtiles` que describe el plan de 20 días.
+Vía 1 lo importa y ya. Vía 2 nunca abre `sw.js`.
 
 ---
 
-## 5. Los dos riesgos que pueden matar la demo
+## 6. Calendario en paralelo
 
-**Clerk.** El plan anterior ya lo decía: `proxy.ts` es la pieza de mayor riesgo técnico
-del proyecto. Hoy, además, **no está en el guion** — el reporte se hace como invitado.
+Sobre los 20 días hábiles de `roadmap.md`. Las cinco columnas avanzan a la vez.
 
-> **Timebox de 60 minutos.** Si al minuto 60 no hay un login que funcione, Auth abandona
-> Clerk, el alta de fuente queda abierta igual que el reporte, y esa persona pasa a ser
-> segundo par de manos de la Vía 2, que es la más cargada. Esto no se negocia en el
-> minuto 120: se decide en el 60.
-
-**MapLibre.** Es la única dependencia pesada y el único código que puede no arrancar.
-
-> Si al minuto 90 `MapaBase` no pinta: `SelectorPunto` se queda en dos inputs de lat/lng
-> con un botón *«usar mi ubicación»* (`navigator.geolocation`, cinco líneas), y el mapa
-> público se sustituye por una lista de distritos ordenada por riesgo con un badge de
-> color. Feo, pero el guion entero se puede contar igual.
-
----
-
-## 6. Integración: sin PRs
-
-Cinco ramas y cinco PRs en 3,5 horas son media hora de merges en el peor momento posible.
-
-- **Todo el mundo trabaja sobre `master`.** Los ficheros son disjuntos: no hay choque.
-- Traer y publicar **cada 15 minutos**, aunque esté a medias.
-- Si aparece un conflicto, es la señal de que alguien tocó territorio ajeno. Se revierte
-  y se pide la firma.
-- **Nadie corre `npm i` después del minuto 3.** Si te falta una dependencia, la instala
-  Convex, que es quien posee `package.json`.
-
----
-
-## 7. Calendario
-
-| Min | Auth | Convex | V1 · Reporte | V2 · Mapa | V3 · Fuentes y demo |
+| Días | Auth | Convex | Vía 1 · Captura | Vía 2 · Cartografía | Vía 3 · Cuentas |
 |---|---|---|---|---|---|
-| **0–20** | Clerk (timebox) | deps, `convex dev`, esquema, **firmas vacías**, URL al chat | maqueta del formulario | **`SelectorPunto` stub** | **`Boton`, `Campo`**, tokens |
-| **20–60** | Clerk (timebox) | `riesgo.ts` y `reportes.crear` | formulario completo | `MapaBase` pintando | portada |
-| **60–90** | ✅ o corta y apoya a V2 | `fuentes.crear`, `fuentes.masCercanas` | **envío funcionando** | `SelectorPunto` real | alta de fuente |
-| **90–150** | apoyo | `reportes.mapa`, `fuentes.listar` (GeoJSON) | pantalla de gracias con fuentes cercanas | `CapaRiesgo` y `CapaFuentes` | `datos-demo.ts` |
-| **150–180** | — | **congelado** | **congelado** | **congelado** | siembra los datos, integra, arregla lo roto |
-| **180–210** | Los cinco: se ensaya el guion del §0 en un móvil real, dos veces |
+| **1–2** | `proxy.ts`, providers, JWT template | Esquema, seed de zonas, **firmas vacías** | Maqueta de los 5 pasos | `SelectorPunto` stub, spike de MapLibre | Deps, tokens, `Boton`/`Campo`/`Chip` |
+| **3–7** | Roles en el JWT, pruebas de sesión | `riesgo.ts` + asserts, `reportes.crear`, `fuentes.masCercanas` | Formulario completo + borrador en `localStorage` | `MapaBase` real, `SelectorPunto` con mapa, pipeline de tiles | Onboarding, shell, guard de rol |
+| **8–12** | Estados `pendiente` / `aprobado` | Queries GeoJSON, `crons.ts` | Pantalla de confirmación + fuentes cercanas | Las tres capas, filtros de fecha, leyenda | `mis-reportes` con peso decaído |
+| **13–16** | Auditoría de permisos | `fuentes.crear`, `usuarios.aprobar` | Cola IndexedDB + `useColaOffline` | Tablero analítico | Alta de fuente, gestión, admin |
+| **17–19** | — | Verificar idempotencia | `sw.js`, manifest, contador de pendientes | Cacheo de tiles (vía `tiles.ts`) | Pasada de accesibilidad |
+| **20** | — | Datos de demo escalonados | Prueba en modo avión | Rendimiento del bundle del mapa | Revisión de copys + guion |
 
-**Minuto 150 = freeze.** Después de esa marca no se empieza nada nuevo; solo se arregla
-lo que rompe el guion. Los últimos 30 minutos son de ensayo, no de código: una demo que
-falla en vivo vale menos que una demo con la mitad de features que sale entera.
+---
+
+## 7. Integración
+
+- Una rama por vía: `via/captura`, `via/mapa`, `via/cuentas`. PRs pequeños contra `master`.
+- Como los ficheros son disjuntos, los merges no chocan. Si aparece un conflicto, **es la
+  señal de que alguien tocó territorio ajeno** — no se resuelve el conflicto, se revierte y
+  se pide la firma.
+- Deploy de preview por rama desde el día 1, para que las cinco personas vean el mismo estado.
+
+## 8. Si alguien termina antes
+
+Vía 3 es la más ligera de las tres. Si se libera, en este orden:
+
+1. **Descarga CSV** (`src/app/api/exportar/reportes/route.ts`) — medio día, desbloquea a los
+   consumidores de información.
+2. **Moderación de reportes** — el campo `estado` ya existe en el esquema.
+3. **Creación de API_KEY** — la UI; el endpoint `/v1` es de Convex.
+
+Ninguna de las tres toca ficheros de las otras vías.
