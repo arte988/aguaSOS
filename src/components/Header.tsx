@@ -14,6 +14,8 @@ const NAV = [
   { href: "/seguimiento", label: "Seguimiento" },
 ];
 
+const clerkEnabled = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+
 export function Header() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -48,27 +50,31 @@ export function Header() {
             );
           })}
           <div className="ml-2 flex items-center gap-2">
-            <Show when="signed-out">
-              <SignInButton>
-                <button
-                  type="button"
-                  className="rounded-full px-3 py-2 text-sm font-medium text-slate-600 hover:bg-sky-50 hover:text-sky-900"
-                >
-                  Iniciar sesión
-                </button>
-              </SignInButton>
-              <SignUpButton>
-                <button
-                  type="button"
-                  className="rounded-full bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800"
-                >
-                  Registrarse
-                </button>
-              </SignUpButton>
-            </Show>
-            <Show when="signed-in">
-              <UserButton />
-            </Show>
+            {clerkEnabled ? (
+              <>
+                <Show when="signed-out">
+                  <SignInButton>
+                    <button
+                      type="button"
+                      className="rounded-full px-3 py-2 text-sm font-medium text-slate-600 hover:bg-sky-50 hover:text-sky-900"
+                    >
+                      Iniciar sesión
+                    </button>
+                  </SignInButton>
+                  <SignUpButton>
+                    <button
+                      type="button"
+                      className="rounded-full bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800"
+                    >
+                      Registrarse
+                    </button>
+                  </SignUpButton>
+                </Show>
+                <Show when="signed-in">
+                  <UserButton />
+                </Show>
+              </>
+            ) : null}
             <Link
               href="/reportar"
               className="rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700"
@@ -104,31 +110,35 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
-            <Show when="signed-out">
-              <SignInButton>
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-sky-50"
-                >
-                  Iniciar sesión
-                </button>
-              </SignInButton>
-              <SignUpButton>
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="rounded-lg bg-sky-700 px-3 py-2 text-center text-sm font-semibold text-white"
-                >
-                  Registrarse
-                </button>
-              </SignUpButton>
-            </Show>
-            <Show when="signed-in">
-              <div className="px-3 py-2">
-                <UserButton />
-              </div>
-            </Show>
+            {clerkEnabled ? (
+              <>
+                <Show when="signed-out">
+                  <SignInButton>
+                    <button
+                      type="button"
+                      onClick={() => setOpen(false)}
+                      className="rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-sky-50"
+                    >
+                      Iniciar sesión
+                    </button>
+                  </SignInButton>
+                  <SignUpButton>
+                    <button
+                      type="button"
+                      onClick={() => setOpen(false)}
+                      className="rounded-lg bg-sky-700 px-3 py-2 text-center text-sm font-semibold text-white"
+                    >
+                      Registrarse
+                    </button>
+                  </SignUpButton>
+                </Show>
+                <Show when="signed-in">
+                  <div className="px-3 py-2">
+                    <UserButton />
+                  </div>
+                </Show>
+              </>
+            ) : null}
             <Link
               href="/reportar"
               onClick={() => setOpen(false)}

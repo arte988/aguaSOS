@@ -1,8 +1,7 @@
-import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Footer } from "@/components/Footer";
-import { Header } from "@/components/Header";
+import { AppFrame } from "@/components/AppFrame";
+import { ClerkGate } from "@/components/ClerkGate";
 import { ConvexClientProvider } from "./ConvexClientProvider";
 import "./globals.css";
 
@@ -31,14 +30,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
-        <ClerkProvider>
+      <body className="h-full bg-background font-sans text-foreground">
+        <ClerkGate>
           <ConvexClientProvider>
-            <Header />
-            <div className="flex min-h-0 flex-1 flex-col">{children}</div>
-            <Footer />
+            <AppFrame>{children}</AppFrame>
           </ConvexClientProvider>
-        </ClerkProvider>
+        </ClerkGate>
       </body>
     </html>
   );
