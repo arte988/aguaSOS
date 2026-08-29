@@ -1,0 +1,1057 @@
+<title>Arquitectura aguaSOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+/* ── Tokens: paleta mineral (caliza, tierra seca) + un solo acento de agua ───── */
+:root {
+  --fondo:      #EEEFEC;
+  --superficie: #F7F8F6;
+  --superficie-2:#E6E8E3;
+  --tinta:      #16191A;
+  --tinta-2:    #565E5B;
+  --tinta-3:    #7C8481;
+  --linea:      #D6D9D4;
+  --linea-firme:#BCC1BB;
+  --agua:       #0A6E9B;
+  --agua-tenue: rgba(10, 110, 155, .09);
+  --vigilancia: #B8791C;
+  --emergencia: #A63A20;
+
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --texto:   "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:    "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --ancho:   1080px;
+  --prosa:   68ch;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fondo:      #131615;
+    --superficie: #1B1F1E;
+    --superficie-2:#252A29;
+    --tinta:      #E8EAE6;
+    --tinta-2:    #9BA5A1;
+    --tinta-3:    #79837F;
+    --linea:      #2D3332;
+    --linea-firme:#3D4644;
+    --agua:       #56B3D9;
+    --agua-tenue: rgba(86, 179, 217, .12);
+    --vigilancia: #EFC15A;
+    --emergencia: #F2695A;
+  }
+}
+
+:root[data-theme="dark"] {
+  --fondo:      #131615;
+  --superficie: #1B1F1E;
+  --superficie-2:#252A29;
+  --tinta:      #E8EAE6;
+  --tinta-2:    #9BA5A1;
+  --tinta-3:    #79837F;
+  --linea:      #2D3332;
+  --linea-firme:#3D4644;
+  --agua:       #56B3D9;
+  --agua-tenue: rgba(86, 179, 217, .12);
+  --vigilancia: #EFC15A;
+  --emergencia: #F2695A;
+}
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  background: var(--fondo);
+  color: var(--tinta);
+  font-family: var(--texto);
+  font-size: 16px;
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+}
+
+.env { max-width: var(--ancho); margin-inline: auto; padding-inline: 28px; }
+
+:is(a):focus-visible, button:focus-visible {
+  outline: 2px solid var(--agua);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+a { color: var(--agua); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+/* ── Encabezado ──────────────────────────────────────────────────────────── */
+.cabecera { padding: 72px 0 34px; border-bottom: 1px solid var(--linea-firme); }
+
+.cabecera .marca {
+  font-family: var(--mono); font-size: 11.5px; font-weight: 500;
+  letter-spacing: .18em; text-transform: uppercase; color: var(--agua);
+  display: flex; align-items: center; gap: 10px;
+}
+.cabecera .marca::after {
+  content: ""; flex: 1; height: 1px; background: var(--linea-firme); max-width: 180px;
+}
+
+h1 {
+  font-family: var(--display); font-weight: 700; font-size: clamp(2.4rem, 6vw, 3.9rem);
+  line-height: 1.02; letter-spacing: -.028em; margin: 18px 0 0; text-wrap: balance;
+}
+
+.entradilla {
+  max-width: var(--prosa); margin: 18px 0 0;
+  font-size: 1.08rem; color: var(--tinta-2);
+}
+
+.ficha {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px; margin-top: 36px;
+  background: var(--linea); border: 1px solid var(--linea);
+}
+.ficha > div { background: var(--fondo); padding: 12px 14px; }
+.ficha dt {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--tinta-3); margin: 0;
+}
+.ficha dd { margin: 4px 0 0; font-size: .9rem; font-weight: 500; }
+
+/* ── Navegación ──────────────────────────────────────────────────────────── */
+.nav {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--fondo) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--linea);
+}
+.nav ul {
+  display: flex; gap: 22px; list-style: none; margin: 0; padding: 11px 0;
+  overflow-x: auto; scrollbar-width: none;
+}
+.nav ul::-webkit-scrollbar { display: none; }
+.nav a {
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--tinta-2); text-decoration: none; white-space: nowrap;
+}
+.nav a:hover { color: var(--agua); }
+
+/* ── Secciones ───────────────────────────────────────────────────────────── */
+section { padding: 62px 0 8px; scroll-margin-top: 56px; }
+
+.rotulo {
+  font-family: var(--mono); font-size: 10.5px; font-weight: 500;
+  letter-spacing: .16em; text-transform: uppercase; color: var(--tinta-3);
+  padding-bottom: 8px; border-bottom: 1px solid var(--linea-firme); margin-bottom: 22px;
+}
+
+h2 {
+  font-family: var(--display); font-weight: 600; font-size: clamp(1.55rem, 3.2vw, 2.1rem);
+  letter-spacing: -.018em; line-height: 1.14; margin: 0 0 12px; text-wrap: balance;
+}
+h3 {
+  font-family: var(--display); font-weight: 600; font-size: 1.12rem;
+  letter-spacing: -.005em; margin: 38px 0 10px;
+}
+p { max-width: var(--prosa); margin: 0 0 15px; }
+.prosa-ancha { max-width: none; }
+
+strong { font-weight: 600; }
+code {
+  font-family: var(--mono); font-size: .87em;
+  background: var(--superficie-2); padding: 1px 5px; border-radius: 3px;
+}
+
+/* ── Figuras ─────────────────────────────────────────────────────────────── */
+figure { margin: 30px 0 34px; }
+.lienzo {
+  background: var(--superficie); border: 1px solid var(--linea);
+  padding: 22px 20px; overflow-x: auto;
+}
+figcaption {
+  font-size: .855rem; color: var(--tinta-2); margin-top: 12px;
+  max-width: var(--prosa); line-height: 1.55;
+}
+figcaption b { color: var(--tinta); font-weight: 600; }
+
+.fig svg { display: block; width: 100%; min-width: 660px; height: auto; color: var(--tinta); }
+.fig.ancha svg { min-width: 820px; }
+.fig .caja  { fill: var(--superficie); stroke: currentColor; stroke-opacity: .28; stroke-width: 1; }
+.fig .caja-2{ fill: var(--superficie-2); stroke: currentColor; stroke-opacity: .18; stroke-width: 1; }
+.fig .grupo { fill: none; stroke: currentColor; stroke-opacity: .3; stroke-dasharray: 4 4; }
+.fig .encabezado { fill: var(--agua-tenue); stroke: currentColor; stroke-opacity: .28; }
+.fig text { fill: currentColor; font-family: var(--mono); }
+.fig .t   { font-size: 12px; }
+.fig .tb  { font-size: 12px; font-weight: 600; }
+.fig .tt  { font-size: 10.5px; fill: var(--tinta-2); }
+.fig .th  { font-size: 11px; font-weight: 600; letter-spacing: .14em; fill: var(--tinta-3); }
+.fig .flecha { stroke: currentColor; stroke-opacity: .5; fill: none; stroke-width: 1.4; }
+.fig .flecha-clave { stroke: var(--agua); fill: none; stroke-width: 2.4; }
+.fig .punteada { stroke: currentColor; stroke-opacity: .4; fill: none; stroke-width: 1.4; stroke-dasharray: 5 4; }
+.fig .mk { fill: currentColor; fill-opacity: .5; }
+.fig .mk-agua { fill: var(--agua); }
+.fig .rejilla { stroke: currentColor; stroke-opacity: .13; stroke-width: 1; }
+.fig .serie { stroke: var(--agua); fill: none; stroke-width: 2; stroke-linejoin: round; }
+.fig .relleno { fill: var(--agua); fill-opacity: .1; }
+.fig .umbral { stroke: currentColor; stroke-opacity: .45; stroke-width: 1.5; stroke-dasharray: 6 4; fill: none; }
+.fig .marca { fill: var(--agua); stroke: var(--superficie); stroke-width: 2; }
+
+/* ── Tablas ──────────────────────────────────────────────────────────────── */
+.tabla-env { overflow-x: auto; border: 1px solid var(--linea); background: var(--superficie); margin: 24px 0 30px; }
+table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: .9rem; }
+th, td { text-align: left; padding: 11px 16px; border-bottom: 1px solid var(--linea); vertical-align: top; }
+thead th {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--tinta-3); font-weight: 500;
+  background: var(--superficie-2); border-bottom: 1px solid var(--linea-firme);
+}
+tbody tr:last-child td { border-bottom: 0; }
+td code { background: transparent; padding: 0; color: var(--agua); }
+
+/* ── Fichas de decisión ──────────────────────────────────────────────────── */
+.decisiones { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1px; background: var(--linea); border: 1px solid var(--linea); margin: 26px 0 8px; }
+.decision { background: var(--superficie); padding: 20px 22px 22px; }
+.decision .clave {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--tinta-3);
+}
+.decision h4 {
+  font-family: var(--display); font-size: 1.02rem; font-weight: 600;
+  margin: 7px 0 8px; letter-spacing: -.005em; color: var(--agua);
+}
+.decision p { font-size: .885rem; color: var(--tinta-2); margin: 0; max-width: none; }
+.decision p + p { margin-top: 9px; }
+
+/* ── Nota / advertencia ──────────────────────────────────────────────────── */
+.nota {
+  border-left: 3px solid var(--agua); background: var(--superficie);
+  padding: 16px 20px; margin: 26px 0; max-width: var(--prosa);
+}
+.nota.alerta { border-left-color: var(--emergencia); }
+.nota p { margin: 0; font-size: .92rem; }
+.nota p + p { margin-top: 9px; }
+.nota .etiqueta {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--tinta-3); display: block; margin-bottom: 6px;
+}
+.nota.alerta .etiqueta { color: var(--emergencia); }
+
+/* ── Bloques de código y árbol ───────────────────────────────────────────── */
+pre {
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.72;
+  background: var(--superficie); border: 1px solid var(--linea);
+  padding: 20px 22px; overflow-x: auto; margin: 22px 0 26px;
+  tab-size: 2;
+}
+pre .c  { color: var(--tinta-3); }
+pre .k  { color: var(--agua); font-weight: 500; }
+pre .d  { color: var(--tinta-2); }
+pre .w  { color: var(--vigilancia); font-weight: 500; }
+
+/* ── Niveles de riesgo ───────────────────────────────────────────────────── */
+.niveles { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0 26px; }
+.nivel {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: .04em;
+  border: 1px solid var(--linea-firme); background: var(--superficie);
+  padding: 6px 12px 6px 10px;
+}
+.nivel::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--tinta-3); }
+.nivel.v::before { background: var(--vigilancia); }
+.nivel.e::before { background: var(--emergencia); }
+.nivel span { color: var(--tinta-2); }
+
+/* ── Etapas ──────────────────────────────────────────────────────────────── */
+.etapas { display: grid; gap: 1px; background: var(--linea); border: 1px solid var(--linea); margin: 26px 0 8px; }
+.etapa { background: var(--superficie); display: grid; grid-template-columns: 66px 1fr; gap: 20px; padding: 18px 22px; }
+.etapa .num {
+  font-family: var(--display); font-size: 2rem; font-weight: 700; line-height: 1;
+  color: var(--agua); letter-spacing: -.03em;
+}
+.etapa .num small { display: block; font-family: var(--mono); font-size: 10px; font-weight: 400; letter-spacing: .1em; color: var(--tinta-3); margin-top: 5px; }
+.etapa h4 { font-family: var(--display); font-size: 1.02rem; font-weight: 600; margin: 2px 0 5px; }
+.etapa p { margin: 0; font-size: .885rem; color: var(--tinta-2); max-width: none; }
+.etapa .listo { margin-top: 7px; font-size: .845rem; }
+.etapa .listo b { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--tinta-3); font-weight: 500; }
+
+/* ── Lista de verificación ───────────────────────────────────────────────── */
+.riesgos { list-style: none; padding: 0; margin: 24px 0 8px; max-width: 860px; }
+.riesgos li {
+  border-top: 1px solid var(--linea); padding: 15px 0 15px 0;
+  display: grid; grid-template-columns: 118px 1fr; gap: 20px; align-items: baseline;
+}
+.riesgos li:last-child { border-bottom: 1px solid var(--linea); }
+.riesgos .cuando {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--emergencia);
+}
+.riesgos p { margin: 0; font-size: .9rem; max-width: none; }
+.riesgos p b { font-weight: 600; }
+
+/* ── Enlaces a los .md ───────────────────────────────────────────────────── */
+.archivos { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1px; background: var(--linea); border: 1px solid var(--linea); margin: 26px 0 8px; }
+.archivo { background: var(--superficie); padding: 16px 20px; }
+.archivo .ruta { font-family: var(--mono); font-size: 12px; color: var(--agua); font-weight: 500; }
+.archivo p { margin: 6px 0 0; font-size: .845rem; color: var(--tinta-2); max-width: none; }
+
+/* ── Pie ─────────────────────────────────────────────────────────────────── */
+.pie { margin-top: 66px; border-top: 1px solid var(--linea-firme); padding: 26px 0 60px; }
+.pie p { font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--tinta-3); max-width: none; }
+
+@media (max-width: 640px) {
+  .env { padding-inline: 20px; }
+  .cabecera { padding-top: 48px; }
+  .etapa { grid-template-columns: 1fr; gap: 8px; }
+  .etapa .num { display: flex; align-items: baseline; gap: 10px; font-size: 1.5rem; }
+  .etapa .num small { margin-top: 0; }
+  .riesgos li { grid-template-columns: 1fr; gap: 6px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+</style>
+
+<header class="cabecera">
+  <div class="env">
+    <div class="marca">aguaSOS · El Salvador</div>
+    <h1>Arquitectura aguaSOS</h1>
+    <p class="entradilla">
+      Plataforma de reporte de escasez de agua y localización de fuentes de suministro.
+      Este documento fija la arquitectura, el modelo de datos y el algoritmo de riesgo hídrico
+      antes de escribir la primera línea de producto.
+    </p>
+    <dl class="ficha">
+      <div><dt>Frontend</dt><dd>Next.js 16.3.3 · React 19.2 · TS</dd></div>
+      <div><dt>Backend</dt><dd>Convex 1.45</dd></div>
+      <div><dt>Identidad</dt><dd>Clerk</dd></div>
+      <div><dt>Mapas</dt><dd>MapLibre GL + PMTiles</dd></div>
+      <div><dt>Alcance</dt><dd>Demo · 4 semanas</dd></div>
+    </dl>
+  </div>
+</header>
+
+<nav class="nav" aria-label="Secciones">
+  <div class="env">
+    <ul>
+      <li><a href="#decisiones">Decisiones</a></li>
+      <li><a href="#arquitectura">Arquitectura</a></li>
+      <li><a href="#flujo">Flujo del reporte</a></li>
+      <li><a href="#riesgo">Riesgo hídrico</a></li>
+      <li><a href="#datos">Modelo de datos</a></li>
+      <li><a href="#carpetas">Carpetas</a></li>
+      <li><a href="#etapas">Etapas</a></li>
+      <li><a href="#verificar">Por verificar</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="env">
+
+<!-- ══ DECISIONES ═══════════════════════════════════════════════════════════ -->
+<section id="decisiones">
+  <div class="rotulo">Las seis decisiones que ordenan todo lo demás</div>
+  <h2>Qué se decidió, y qué se dejó fuera a propósito</h2>
+  <p>
+    Todo lo que sigue cuelga de estas seis. Cada una está tomada para un piloto de cuatro
+    semanas: si el proyecto crece, la columna de la derecha dice por dónde se sube.
+  </p>
+
+  <div class="decisiones">
+    <div class="decision">
+      <div class="clave">Datos</div>
+      <h4>El navegador habla con Convex, no con Next</h4>
+      <p>Next sirve la interfaz. Los datos van por WebSocket directo del cliente a Convex, autenticados con el JWT de Clerk.</p>
+      <p>Eso hace el mapa reactivo sin escribir una línea de polling: un reporte nuevo aparece en todas las pantallas abiertas.</p>
+    </div>
+    <div class="decision">
+      <div class="clave">Autorización</div>
+      <h4>El rol vive solo en Convex</h4>
+      <p>No se duplica en <code>publicMetadata</code> de Clerk. Dos fuentes de verdad para permisos es la forma clásica de abrir un agujero.</p>
+      <p><code>proxy.ts</code> decide sesión sí o no; el rol se verifica dentro de cada función del backend.</p>
+    </div>
+    <div class="decision">
+      <div class="clave">Algoritmo</div>
+      <h4>El decaimiento se calcula al leer</h4>
+      <p>Ningún campo <code>activo</code> que un job tenga que reescribir cada noche. El peso de un reporte es una función pura de su severidad y su edad.</p>
+      <p>Cero escrituras, cero deriva entre el flag y la realidad.</p>
+    </div>
+    <div class="decision">
+      <div class="clave">Geografía</div>
+      <h4>Sin componente geoespacial</h4>
+      <p>El Salvador cabe en un rectángulo de 21.000 km² y el piloto son miles de filas. Un índice por latitud y un filtro en memoria bastan.</p>
+      <p>Cuando deje de rendir, <code>@convex-dev/geospatial</code> reemplaza dos funciones.</p>
+    </div>
+    <div class="decision">
+      <div class="clave">Mapas</div>
+      <h4>MapLibre GL sobre tiles propios</h4>
+      <p>Sin token, sin coste por carga, sin depender de la facturación de un proveedor para un proyecto humanitario.</p>
+      <p>El heatmap es una capa nativa de MapLibre: corre en GPU y aguanta miles de puntos.</p>
+    </div>
+    <div class="decision">
+      <div class="clave">Alcance</div>
+      <h4>API pública y CSV, después</h4>
+      <p>El esquema de <code>apiKeys</code> ya está diseñado, pero no se construye en las cuatro semanas: ningún consumidor real la usará en una demo.</p>
+      <p>El algoritmo de riesgo <b>sí</b> entra — sin él no hay mapa de intensidad, y el mapa es media demo.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ ARQUITECTURA ═════════════════════════════════════════════════════════ -->
+<section id="arquitectura">
+  <div class="rotulo">Diagrama · componentes y caminos de datos</div>
+  <h2>Cómo se conectan las piezas</h2>
+  <p>
+    Cuatro sistemas: el dispositivo, Next en Vercel, Convex y Clerk. Lo que hay que ver en el
+    dibujo es que <strong>Next no está en el camino de los datos</strong>: sirve el HTML y
+    después se aparta.
+  </p>
+
+  <figure class="fig ancha">
+    <div class="lienzo">
+      <svg viewBox="0 0 900 670" role="img" aria-label="Diagrama de arquitectura: el dispositivo recibe HTML y componentes de servidor desde Next.js en Vercel, pero abre una conexión WebSocket reactiva directa con Convex usando el JWT de Clerk. Convex contiene queries y mutations, siete tablas, crons, un router HTTP para la API pública y un módulo de riesgo en TypeScript puro que el cliente también importa. Clerk emite la sesión para Next y el JWT que Convex verifica. Los tiles del mapa se sirven desde un bucket externo.">
+        <defs>
+          <marker id="f1a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="mk" points="0,1 10,5 0,9"></polygon>
+          </marker>
+          <marker id="f1b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <polygon class="mk-agua" points="0,1 10,5 0,9"></polygon>
+          </marker>
+        </defs>
+
+        <!-- Tiles -->
+        <rect class="caja-2" x="20" y="20" width="200" height="44"></rect>
+        <text class="t" x="120" y="40" text-anchor="middle">Tiles .pmtiles</text>
+        <text class="tt" x="120" y="55" text-anchor="middle">bucket R2 / S3</text>
+        <line class="flecha" x1="120" y1="64" x2="120" y2="94" marker-end="url(#f1a)"></line>
+        <text class="tt" x="128" y="84">Range requests</text>
+
+        <!-- Dispositivo -->
+        <rect class="grupo" x="20" y="100" width="200" height="190" rx="3"></rect>
+        <text class="th" x="32" y="120">DISPOSITIVO</text>
+        <rect class="caja" x="32" y="132" width="176" height="42"></rect>
+        <text class="t" x="120" y="158" text-anchor="middle">Shell PWA (Next)</text>
+        <rect class="caja" x="32" y="182" width="176" height="42"></rect>
+        <text class="t" x="120" y="203" text-anchor="middle">Cola offline</text>
+        <text class="tt" x="120" y="217" text-anchor="middle">IndexedDB</text>
+        <rect class="caja" x="32" y="232" width="176" height="42"></rect>
+        <text class="t" x="120" y="258" text-anchor="middle">Service worker</text>
+
+        <!-- Next -->
+        <rect class="grupo" x="300" y="100" width="220" height="190" rx="3"></rect>
+        <text class="th" x="312" y="120">NEXT.JS 16.3.3 · VERCEL</text>
+        <rect class="caja" x="312" y="132" width="196" height="42"></rect>
+        <text class="t" x="410" y="158" text-anchor="middle">src/proxy.ts · sesión</text>
+        <rect class="caja" x="312" y="182" width="196" height="42"></rect>
+        <text class="t" x="410" y="208" text-anchor="middle">RSC + Client Comp.</text>
+        <rect class="caja" x="312" y="232" width="196" height="42"></rect>
+        <text class="t" x="410" y="258" text-anchor="middle">/api/exportar → CSV</text>
+
+        <!-- Clerk -->
+        <rect class="caja" x="620" y="150" width="180" height="60"></rect>
+        <text class="tb" x="710" y="177" text-anchor="middle">Clerk</text>
+        <text class="tt" x="710" y="194" text-anchor="middle">identidad · JWT</text>
+
+        <!-- Flechas fila 1 -->
+        <line class="flecha" x1="222" y1="153" x2="296" y2="153" marker-end="url(#f1a)"></line>
+        <text class="tt" x="259" y="145" text-anchor="middle">HTML + RSC</text>
+        <line class="flecha" x1="522" y1="180" x2="616" y2="180" marker-end="url(#f1a)"></line>
+        <text class="tt" x="569" y="172" text-anchor="middle">sesión</text>
+
+        <!-- Flechas hacia Convex -->
+        <line class="flecha-clave" x1="120" y1="292" x2="120" y2="334" marker-end="url(#f1b)"></line>
+        <text class="tt" x="130" y="308">WebSocket reactivo</text>
+        <text class="tt" x="130" y="322">JWT de Clerk</text>
+
+        <line class="flecha" x1="410" y1="292" x2="410" y2="334" marker-end="url(#f1a)"></line>
+        <text class="tt" x="420" y="316">solo para el CSV</text>
+
+        <line class="flecha" x1="710" y1="212" x2="710" y2="334" marker-end="url(#f1a)"></line>
+        <text class="tt" x="720" y="266">verifica el JWT</text>
+        <text class="tt" x="720" y="280">auth.config.ts</text>
+
+        <!-- Convex -->
+        <rect class="grupo" x="20" y="340" width="860" height="190" rx="3"></rect>
+        <text class="th" x="32" y="360">CONVEX</text>
+        <rect class="caja" x="36" y="376" width="196" height="52"></rect>
+        <text class="t" x="134" y="399" text-anchor="middle">queries · mutations</text>
+        <text class="tt" x="134" y="415" text-anchor="middle">transaccionales</text>
+        <rect class="caja" x="252" y="376" width="196" height="52"></rect>
+        <text class="t" x="350" y="399" text-anchor="middle">7 tablas + índices</text>
+        <text class="tt" x="350" y="415" text-anchor="middle">schema.ts</text>
+        <rect class="caja" x="468" y="376" width="196" height="52"></rect>
+        <text class="t" x="566" y="399" text-anchor="middle">crons.ts</text>
+        <text class="tt" x="566" y="415" text-anchor="middle">cierra alertas · diario</text>
+        <rect class="caja" x="684" y="376" width="180" height="52"></rect>
+        <text class="t" x="774" y="399" text-anchor="middle">http.ts · GET /v1</text>
+        <text class="tt" x="774" y="415" text-anchor="middle">X-API-Key</text>
+        <rect class="caja-2" x="36" y="444" width="828" height="50"></rect>
+        <text class="t" x="450" y="466" text-anchor="middle">model/riesgo.ts — TypeScript puro, sin ctx</text>
+        <text class="tt" x="450" y="482" text-anchor="middle">el cliente importa el mismo módulo: el mapa pinta el número que calcula el servidor</text>
+
+        <!-- Consumidor -->
+        <rect class="caja" x="684" y="590" width="180" height="52"></rect>
+        <text class="t" x="774" y="612" text-anchor="middle">Consumidor de info</text>
+        <text class="tt" x="774" y="628" text-anchor="middle">script / API externa</text>
+        <line class="flecha" x1="774" y1="588" x2="774" y2="534" marker-end="url(#f1a)"></line>
+        <text class="tt" x="784" y="564">X-API-Key</text>
+      </svg>
+    </div>
+    <figcaption>
+      La flecha gruesa es el camino de datos principal. Todo lo reactivo — mapa, historial,
+      contador de alertas — viaja por ahí. <b>Next solo aparece en el camino de datos para el
+      CSV</b>, porque esa descarga necesita autenticarse con la sesión del navegador y no con
+      una API key. Los tiles del mapa no pasan por ninguno de los dos.
+    </figcaption>
+  </figure>
+</section>
+
+<!-- ══ FLUJO ════════════════════════════════════════════════════════════════ -->
+<section id="flujo">
+  <div class="rotulo">Secuencia · el camino crítico</div>
+  <h2>Qué pasa cuando alguien reporta escasez</h2>
+  <p>
+    Es el flujo que define el producto y el único que se construye pensando en que
+    <strong>no hay señal</strong>. Todo lo que ocurre en el servidor cabe en una sola
+    transacción, y esa transacción es idempotente.
+  </p>
+
+  <figure class="fig ancha">
+    <div class="lienzo">
+      <svg viewBox="0 0 990 400" role="img" aria-label="Secuencia del reporte: el usuario llena el formulario; si hay red, la mutation reportes.crear ejecuta cinco pasos en una sola transacción (buscar la clave de idempotencia, calcular severidad y distrito, insertar, recalcular el riesgo de la zona, y abrir una alerta si cruza el umbral) y devuelve la confirmación con las fuentes más cercanas; si no hay red, el reporte se guarda en una cola de IndexedDB y se reenvía con la misma clave de idempotencia al volver la conexión.">
+        <defs>
+          <marker id="f2a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="mk" points="0,1 10,5 0,9"></polygon>
+          </marker>
+          <marker id="f2b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <polygon class="mk-agua" points="0,1 10,5 0,9"></polygon>
+          </marker>
+        </defs>
+
+        <!-- Formulario -->
+        <rect class="caja" x="20" y="60" width="150" height="56"></rect>
+        <text class="t" x="95" y="83" text-anchor="middle">Llena el</text>
+        <text class="t" x="95" y="99" text-anchor="middle">formulario</text>
+        <line class="flecha" x1="172" y1="88" x2="204" y2="88" marker-end="url(#f2a)"></line>
+
+        <!-- ¿Red? -->
+        <rect class="caja-2" x="210" y="54" width="140" height="68"></rect>
+        <text class="tb" x="280" y="86" text-anchor="middle">¿hay red?</text>
+        <text class="tt" x="280" y="103" text-anchor="middle">useOffline()</text>
+
+        <line class="flecha-clave" x1="352" y1="88" x2="394" y2="88" marker-end="url(#f2b)"></line>
+        <text class="tt" x="373" y="79" text-anchor="middle">sí</text>
+
+        <!-- Transacción -->
+        <rect class="grupo" x="400" y="14" width="320" height="268" rx="3"></rect>
+        <text class="th" x="412" y="34">REPORTES.CREAR</text>
+        <text class="tt" x="412" y="50">una sola transacción, o nada</text>
+
+        <rect class="caja" x="414" y="64" width="292" height="32"></rect>
+        <text class="t" x="426" y="84">1 · lookup by_idempotencia</text>
+        <rect class="caja" x="414" y="102" width="292" height="32"></rect>
+        <text class="t" x="426" y="122">2 · severidadBase() + distritoId</text>
+        <rect class="caja" x="414" y="140" width="292" height="32"></rect>
+        <text class="t" x="426" y="160">3 · insert reportesEscasez</text>
+        <rect class="caja" x="414" y="178" width="292" height="32"></rect>
+        <text class="t" x="426" y="198">4 · recalcula riesgoZona</text>
+        <rect class="caja" x="414" y="216" width="292" height="32"></rect>
+        <text class="t" x="426" y="236">5 · ¿umbral? → abre alerta</text>
+
+        <!-- Respuesta -->
+        <line class="flecha-clave" x1="722" y1="148" x2="784" y2="148" marker-end="url(#f2b)"></line>
+        <text class="tt" x="753" y="139" text-anchor="middle">devuelve</text>
+        <rect class="caja" x="790" y="110" width="180" height="76"></rect>
+        <text class="t" x="880" y="134" text-anchor="middle">Confirmación</text>
+        <text class="t" x="880" y="151" text-anchor="middle">+ fuentes más</text>
+        <text class="t" x="880" y="168" text-anchor="middle">cercanas</text>
+
+        <!-- Rama offline -->
+        <line class="flecha" x1="280" y1="124" x2="280" y2="296" marker-end="url(#f2a)"></line>
+        <text class="tt" x="288" y="200">no</text>
+        <rect class="caja" x="210" y="300" width="140" height="60"></rect>
+        <text class="t" x="280" y="325" text-anchor="middle">Cola offline</text>
+        <text class="tt" x="280" y="341" text-anchor="middle">IndexedDB</text>
+
+        <path class="punteada" d="M 352 330 L 560 330 L 560 288" marker-end="url(#f2a)"></path>
+        <text class="tt" x="520" y="352" text-anchor="middle">al volver la red · misma claveIdempotencia</text>
+      </svg>
+    </div>
+    <figcaption>
+      El paso 1 es lo que hace segura la cola offline: si ya existe una fila con esa
+      <b>claveIdempotencia</b>, la mutation devuelve el mismo <code>_id</code> y no inserta
+      nada. La clave se genera <b>al montar el formulario</b>, no al enviarlo, para que cada
+      reintento reuse exactamente la misma. Sin eso, un reenvío desde la cola duplica el
+      reporte y el mapa exagera la escasez.
+    </figcaption>
+  </figure>
+</section>
+
+<!-- ══ RIESGO ═══════════════════════════════════════════════════════════════ -->
+<section id="riesgo">
+  <div class="rotulo">Algoritmo · requisito 2 del documento funcional</div>
+  <h2>Cómo se apaga un reporte con el tiempo</h2>
+  <p>
+    El requisito pide que el efecto de un reporte se reduzca según su antigüedad, su impacto
+    y el número de reportes. Los tres factores caben en dos funciones puras.
+  </p>
+
+<pre><span class="c">// Se calcula una vez, en la mutation, y se congela en la fila.</span>
+<span class="k">const</span> PESO_IMPACTO = { casa: 1, pasaje: 3, comunidad: 9 };
+
+severidadBase = PESO_IMPACTO[impacto]
+              × (1 + log10(1 + personasEst))          <span class="c">// amortigua números grandes</span>
+              × (1 + 0.5 × menores / personasEst)     <span class="c">// 1.0 – 1.5</span>
+              + economico;                            <span class="c">// hectáreas × % pérdida, tope 10</span>
+
+<span class="c">// Se calcula al leer, nunca se guarda.</span>
+peso(t)      = severidadBase × 0.5 ^ (días / 14);     <span class="c">// vida media de 14 días</span>
+riesgoZona   = Σ peso(t)                              <span class="c">// aquí entra el nº de reportes</span></pre>
+
+  <figure class="fig">
+    <div class="lienzo">
+      <svg viewBox="0 0 720 310" role="img" aria-label="Curva de decaimiento exponencial del peso de un reporte de impacto comunidad: empieza en 9, cae a la mitad (4,5) a los 14 días, a 2,25 a los 28 días, y cruza el umbral activo de 0,5 alrededor del día 58.">
+        <!-- Rejilla horizontal -->
+        <line class="rejilla" x1="70" y1="250" x2="660" y2="250"></line>
+        <line class="rejilla" x1="70" y1="208" x2="660" y2="208"></line>
+        <line class="rejilla" x1="70" y1="166" x2="660" y2="166"></line>
+        <line class="rejilla" x1="70" y1="124" x2="660" y2="124"></line>
+        <line class="rejilla" x1="70" y1="82"  x2="660" y2="82"></line>
+        <line class="rejilla" x1="70" y1="40"  x2="660" y2="40"></line>
+        <text class="tt" x="60" y="254" text-anchor="end">0</text>
+        <text class="tt" x="60" y="212" text-anchor="end">2</text>
+        <text class="tt" x="60" y="170" text-anchor="end">4</text>
+        <text class="tt" x="60" y="128" text-anchor="end">6</text>
+        <text class="tt" x="60" y="86"  text-anchor="end">8</text>
+        <text class="tt" x="60" y="44"  text-anchor="end">10</text>
+
+        <!-- Área + curva -->
+        <polygon class="relleno" points="70.0,61.0 78.4,70.1 86.9,78.8 95.3,87.1 103.7,95.0 112.1,102.4 120.6,109.6 129.0,116.4 137.4,122.8 145.9,129.0 154.3,134.8 162.7,140.4 171.1,145.7 179.6,150.7 188.0,155.5 196.4,160.1 204.9,164.4 213.3,168.5 221.7,172.5 230.1,176.2 238.6,179.8 247.0,183.2 255.4,186.4 263.9,189.5 272.3,192.4 280.7,195.2 289.1,197.8 297.6,200.4 306.0,202.8 314.4,205.0 322.9,207.2 331.3,209.3 339.7,211.2 348.1,213.1 356.6,214.9 365.0,216.6 373.4,218.2 381.9,219.7 390.3,221.2 398.7,222.6 407.1,223.9 415.6,225.2 424.0,226.4 432.4,227.5 440.9,228.6 449.3,229.6 457.7,230.6 466.1,231.6 474.6,232.4 483.0,233.3 491.4,234.1 499.9,234.9 508.3,235.6 516.7,236.3 525.1,237.0 533.6,237.6 542.0,238.2 550.4,238.8 558.9,239.3 567.3,239.8 575.7,240.3 584.1,240.8 592.6,241.2 601.0,241.6 609.4,242.1 617.9,242.4 626.3,242.8 634.7,243.1 643.1,243.5 651.6,243.8 660.0,244.1 660.0,250.0 70.0,250.0"></polygon>
+        <polyline class="serie" points="70.0,61.0 78.4,70.1 86.9,78.8 95.3,87.1 103.7,95.0 112.1,102.4 120.6,109.6 129.0,116.4 137.4,122.8 145.9,129.0 154.3,134.8 162.7,140.4 171.1,145.7 179.6,150.7 188.0,155.5 196.4,160.1 204.9,164.4 213.3,168.5 221.7,172.5 230.1,176.2 238.6,179.8 247.0,183.2 255.4,186.4 263.9,189.5 272.3,192.4 280.7,195.2 289.1,197.8 297.6,200.4 306.0,202.8 314.4,205.0 322.9,207.2 331.3,209.3 339.7,211.2 348.1,213.1 356.6,214.9 365.0,216.6 373.4,218.2 381.9,219.7 390.3,221.2 398.7,222.6 407.1,223.9 415.6,225.2 424.0,226.4 432.4,227.5 440.9,228.6 449.3,229.6 457.7,230.6 466.1,231.6 474.6,232.4 483.0,233.3 491.4,234.1 499.9,234.9 508.3,235.6 516.7,236.3 525.1,237.0 533.6,237.6 542.0,238.2 550.4,238.8 558.9,239.3 567.3,239.8 575.7,240.3 584.1,240.8 592.6,241.2 601.0,241.6 609.4,242.1 617.9,242.4 626.3,242.8 634.7,243.1 643.1,243.5 651.6,243.8 660.0,244.1"></polyline>
+
+        <!-- Umbral -->
+        <line class="umbral" x1="70" y1="239.5" x2="660" y2="239.5"></line>
+        <text class="tt" x="76" y="234">UMBRAL_ACTIVO = 0.5</text>
+
+        <!-- Vida media -->
+        <line class="rejilla" x1="188" y1="155.5" x2="188" y2="250" stroke-dasharray="3 3"></line>
+        <circle class="marca" cx="188" cy="155.5" r="4.5"><title>Día 14 · peso 4,5 — la mitad de la severidad inicial</title></circle>
+        <text class="tt" x="198" y="150">14 días → la mitad</text>
+
+        <!-- Cruce del umbral -->
+        <circle class="marca" cx="562" cy="239.5" r="4.5"><title>Día 58 · el reporte deja de contar como activo</title></circle>
+        <text class="tt" x="554" y="226" text-anchor="end">deja de contar · día 58</text>
+
+        <!-- Eje X -->
+        <line class="rejilla" x1="70" y1="250" x2="660" y2="250" stroke-opacity=".3"></line>
+        <text class="tt" x="70"  y="268" text-anchor="middle">0</text>
+        <text class="tt" x="188" y="268" text-anchor="middle">14</text>
+        <text class="tt" x="306" y="268" text-anchor="middle">28</text>
+        <text class="tt" x="424" y="268" text-anchor="middle">42</text>
+        <text class="tt" x="542" y="268" text-anchor="middle">56</text>
+        <text class="tt" x="660" y="268" text-anchor="middle">70</text>
+        <text class="tt" x="365" y="292" text-anchor="middle">días desde el reporte</text>
+        <text class="tt" x="20" y="145" text-anchor="middle" transform="rotate(-90 20 145)">peso del reporte</text>
+      </svg>
+    </div>
+    <figcaption>
+      Un reporte de impacto <b>comunidad</b> con 20 personas afectadas. Empieza pesando 9,
+      vale la mitad a las dos semanas y deja de contar como activo alrededor del día 58.
+      Un reporte de impacto <b>casa</b> arranca en 1,3 y se apaga en tres semanas.
+      Diez reportes pequeños en el mismo distrito suman más que uno grande solo — que es
+      exactamente lo que pide el requisito.
+    </figcaption>
+  </figure>
+
+  <h3>Los tres niveles</h3>
+  <p>
+    El umbral de emergencia escala con la población del distrito, con un piso para que un
+    distrito muy pequeño pueda dispararlo también.
+  </p>
+  <div class="niveles">
+    <span class="nivel">normal <span>· riesgo &lt; 50 % del umbral</span></span>
+    <span class="nivel v">vigilancia <span>· riesgo ≥ 50 % del umbral</span></span>
+    <span class="nivel e">emergencia <span>· riesgo ≥ umbral = máx(30 ; 0,002 × población)</span></span>
+  </div>
+
+  <h3>Cuándo se recalcula, y por qué eso importa</h3>
+  <p>
+    El decaimiento <strong>solo baja</strong> el riesgo. Esa asimetría hace el disparo barato:
+    entrar en emergencia solo puede ocurrir al insertar un reporte, así que se recalcula la
+    zona en la misma transacción; salir solo puede ocurrir por el paso del tiempo, así que
+    basta un cron diario que cierre las alertas cuyo riesgo ya cayó. No hace falta ningún job
+    que recorra todas las zonas cada hora.
+  </p>
+
+  <div class="nota alerta">
+    <span class="etiqueta">Sin calibrar</span>
+    <p>
+      Los coeficientes — 14 días de vida media, los pesos 1 / 3 / 9, el 0,002 del umbral — son
+      heurísticos. Ninguno está contrastado contra datos de campo.
+    </p>
+    <p>
+      Por eso el MVP <strong>no envía nada al exterior</strong>: la alerta vive dentro de la
+      plataforma como un badge. Un correo de emergencia hídrica falso a una institución de
+      gobierno cuesta una credibilidad que no se recupera. Antes de conectar cualquier canal
+      externo, mover los coeficientes a una tabla <code>parametros</code> editable y ajustarlos
+      contra series históricas.
+    </p>
+  </div>
+</section>
+
+<!-- ══ MODELO DE DATOS ══════════════════════════════════════════════════════ -->
+<section id="datos">
+  <div class="rotulo">Esquema · siete tablas en Convex</div>
+  <h2>Modelo de datos</h2>
+  <p>
+    <code>zonas</code> es el eje: todo lo geográfico cuelga de un distrito, y el riesgo se
+    agrega por distrito. Convex añade <code>_id</code> y <code>_creationTime</code> a cada
+    fila, así que no hay campos de fecha de creación duplicados.
+  </p>
+
+  <figure class="fig ancha">
+    <div class="lienzo">
+      <svg viewBox="0 0 1000 560" role="img" aria-label="Diagrama entidad-relación: usuarios se relaciona con reportesEscasez por autorId opcional, con fuentesSuministro y apiKeys por propietarioId. reportesEscasez y fuentesSuministro apuntan a zonas por distritoId. zonas se autorreferencia por padreId y tiene una relación uno a uno con riesgoZona, que abre y cierra filas en alertasEmergencia.">
+        <defs>
+          <marker id="f4a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="mk" points="0,1 10,5 0,9"></polygon>
+          </marker>
+        </defs>
+
+        <!-- usuarios -->
+        <rect class="caja" x="20" y="40" width="200" height="100"></rect>
+        <rect class="encabezado" x="20" y="40" width="200" height="26"></rect>
+        <text class="tb" x="32" y="58">usuarios</text>
+        <text class="tt" x="32" y="82">clerkUserId</text>
+        <text class="tt" x="32" y="98">rol</text>
+        <text class="tt" x="32" y="114">estadoVerificacion</text>
+        <text class="tt" x="32" y="130">tipoOrganizacion ?</text>
+
+        <!-- apiKeys -->
+        <rect class="caja" x="20" y="240" width="200" height="100"></rect>
+        <rect class="encabezado" x="20" y="240" width="200" height="26"></rect>
+        <text class="tb" x="32" y="258">apiKeys</text>
+        <text class="tt" x="32" y="282">propietarioId →</text>
+        <text class="tt" x="32" y="298">hash (SHA-256)</text>
+        <text class="tt" x="32" y="314">prefijo</text>
+        <text class="tt" x="32" y="330">revocadaEn ?</text>
+
+        <!-- reportesEscasez -->
+        <rect class="caja" x="340" y="40" width="200" height="148"></rect>
+        <rect class="encabezado" x="340" y="40" width="200" height="26"></rect>
+        <text class="tb" x="352" y="58">reportesEscasez</text>
+        <text class="tt" x="352" y="82">claveIdempotencia</text>
+        <text class="tt" x="352" y="98">autorId ?</text>
+        <text class="tt" x="352" y="114">distritoId →</text>
+        <text class="tt" x="352" y="130">lat / lng</text>
+        <text class="tt" x="352" y="146">impacto · personasEst</text>
+        <text class="tt" x="352" y="162">severidadBase</text>
+        <text class="tt" x="352" y="178">estado</text>
+
+        <!-- fuentesSuministro -->
+        <rect class="caja" x="340" y="280" width="200" height="116"></rect>
+        <rect class="encabezado" x="340" y="280" width="200" height="26"></rect>
+        <text class="tb" x="352" y="298">fuentesSuministro</text>
+        <text class="tt" x="352" y="322">propietarioId →</text>
+        <text class="tt" x="352" y="338">distritoId →</text>
+        <text class="tt" x="352" y="354">tiposSuministro[]</text>
+        <text class="tt" x="352" y="370">contactoTelefono</text>
+        <text class="tt" x="352" y="386">disponible</text>
+
+        <!-- zonas -->
+        <rect class="caja" x="680" y="40" width="200" height="116"></rect>
+        <rect class="encabezado" x="680" y="40" width="200" height="26"></rect>
+        <text class="tb" x="692" y="58">zonas</text>
+        <text class="tt" x="692" y="82">tipo · nombre</text>
+        <text class="tt" x="692" y="98">codigo</text>
+        <text class="tt" x="692" y="114">padreId ?</text>
+        <text class="tt" x="692" y="130">centroide</text>
+        <text class="tt" x="692" y="146">poblacion ?</text>
+
+        <!-- riesgoZona -->
+        <rect class="caja" x="680" y="240" width="200" height="100"></rect>
+        <rect class="encabezado" x="680" y="240" width="200" height="26"></rect>
+        <text class="tb" x="692" y="258">riesgoZona</text>
+        <text class="tt" x="692" y="282">zonaId → (1:1)</text>
+        <text class="tt" x="692" y="298">riesgo = Σ peso(t)</text>
+        <text class="tt" x="692" y="314">reportesActivos</text>
+        <text class="tt" x="692" y="330">nivel</text>
+
+        <!-- alertasEmergencia -->
+        <rect class="caja" x="680" y="420" width="200" height="100"></rect>
+        <rect class="encabezado" x="680" y="420" width="200" height="26"></rect>
+        <text class="tb" x="692" y="438">alertasEmergencia</text>
+        <text class="tt" x="692" y="462">zonaId →</text>
+        <text class="tt" x="692" y="478">nivel</text>
+        <text class="tt" x="692" y="494">riesgoAlAbrir</text>
+        <text class="tt" x="692" y="510">cerradaEn ?</text>
+
+        <!-- Aristas -->
+        <line class="flecha" x1="222" y1="80" x2="336" y2="80" marker-end="url(#f4a)"></line>
+        <text class="tt" x="279" y="72" text-anchor="middle">autorId ?</text>
+
+        <line class="flecha" x1="120" y1="142" x2="120" y2="236" marker-end="url(#f4a)"></line>
+        <text class="tt" x="130" y="194">propietarioId</text>
+
+        <path class="flecha" d="M 222 110 L 262 110 L 262 320 L 336 320" marker-end="url(#f4a)"></path>
+        <text class="tt" x="270" y="250">propietarioId</text>
+
+        <line class="flecha" x1="542" y1="80" x2="676" y2="80" marker-end="url(#f4a)"></line>
+        <text class="tt" x="609" y="72" text-anchor="middle">distritoId</text>
+
+        <path class="flecha" d="M 542 320 L 600 320 L 600 130 L 676 130" marker-end="url(#f4a)"></path>
+        <text class="tt" x="606" y="308">distritoId</text>
+
+        <line class="flecha" x1="780" y1="158" x2="780" y2="236" marker-end="url(#f4a)"></line>
+        <text class="tt" x="790" y="200">1 : 1</text>
+
+        <line class="flecha" x1="780" y1="342" x2="780" y2="416" marker-end="url(#f4a)"></line>
+        <text class="tt" x="790" y="382">abre / cierra</text>
+
+        <path class="flecha" d="M 882 66 C 926 66 926 112 884 112" marker-end="url(#f4a)"></path>
+        <text class="tt" x="934" y="94">padreId</text>
+      </svg>
+    </div>
+    <figcaption>
+      <code>riesgoZona</code> es un agregado materializado: su campo <code>riesgo</code> es la
+      suma de los pesos decaídos de los reportes de ese distrito, recalculada al insertar un
+      reporte y una vez al día. No hay arista dibujada de <code>reportesEscasez</code> a
+      <code>riesgoZona</code> porque la relación no es una clave foránea, sino una suma.
+      El detalle campo por campo, con tipos e índices, está en <code>docs/modelo-datos.md</code>.
+    </figcaption>
+  </figure>
+
+  <h3>Índices</h3>
+  <div class="tabla-env">
+    <table>
+      <thead>
+        <tr><th>Tabla</th><th>Índice</th><th>Para qué</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>usuarios</code></td><td><code>by_clerk</code></td><td>Resolver el perfil desde el JWT en cada llamada</td></tr>
+        <tr><td><code>reportesEscasez</code></td><td><code>by_idempotencia</code></td><td>Lookup obligatorio antes de insertar — es lo que hace segura la cola offline</td></tr>
+        <tr><td><code>reportesEscasez</code></td><td><code>by_distrito</code></td><td>Recalcular el riesgo de una zona</td></tr>
+        <tr><td><code>reportesEscasez</code></td><td><code>by_autor</code></td><td>Historial del miembro logueado</td></tr>
+        <tr><td><code>reportesEscasez</code> · <code>fuentesSuministro</code></td><td><code>by_lat</code></td><td>Bounding box; el filtro de longitud va en memoria</td></tr>
+        <tr><td><code>fuentesSuministro</code></td><td><code>by_propietario</code></td><td>«Mis fuentes» y verificación de propiedad</td></tr>
+        <tr><td><code>zonas</code></td><td><code>by_padre</code> · <code>by_codigo</code></td><td>Recorrer la jerarquía y sembrar el catálogo</td></tr>
+        <tr><td><code>riesgoZona</code></td><td><code>by_nivel</code></td><td>Barrido diario: solo las zonas que no están en normal</td></tr>
+        <tr><td><code>apiKeys</code></td><td><code>by_hash</code></td><td>Autenticar una petición a <code>/v1</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="nota">
+    <span class="etiqueta">Privacidad</span>
+    <p>
+      Un reporte de impacto <strong>casa</strong> con coordenadas exactas es un dato sensible
+      sobre una vivienda concreta. El mapa público redondea el punto a tres decimales — unos
+      500 m — y la API devuelve agregados por distrito, no puntos. Las coordenadas exactas solo
+      las ven el admin y el propio autor.
+    </p>
+    <p>
+      El teléfono de una fuente de suministro <strong>sí</strong> es público: es el propósito de
+      la tabla. Se dice explícitamente en el formulario de alta y se guarda el consentimiento.
+    </p>
+  </div>
+</section>
+
+<!-- ══ CARPETAS ═════════════════════════════════════════════════════════════ -->
+<section id="carpetas">
+  <div class="rotulo">Estructura · Next.js App Router</div>
+  <h2>Organización de carpetas</h2>
+  <p>
+    De las tres estrategias que documenta Next, la elegida es <strong>dividir por ruta</strong>:
+    lo compartido en <code>src/components</code>, lo específico de una pantalla colocado en su
+    propio <code>_components/</code>. Con un equipo pequeño evita el <code>components/</code> de
+    sesenta ficheros sin dueño.
+  </p>
+
+<pre>aguaSOS/
+├── convex/                        <span class="c">← backend, raíz propia fuera de src/</span>
+│   ├── convex.config.ts           <span class="c">defineApp() + rate-limiter</span>
+│   ├── auth.config.ts             <span class="c">provider Clerk</span>
+│   ├── schema.ts                  <span class="c">las 7 tablas</span>
+│   ├── http.ts                    <span class="c">httpRouter → /v1 con X-API-Key</span>
+│   ├── crons.ts                   <span class="c">cierre diario de alertas</span>
+│   ├── model/                     <span class="k">TS puro, sin ctx — el cliente lo importa</span>
+│   │   ├── riesgo.ts              <span class="c">severidadBase · peso · nivel</span>
+│   │   ├── riesgo.test.ts         <span class="c">asserts, sin framework</span>
+│   │   └── geo.ts                 <span class="c">bbox · haversine · redondearPunto</span>
+│   ├── lib/                       <span class="c">helpers CON ctx</span>
+│   │   ├── auth.ts                <span class="c">usuarioActual · requiereRol</span>
+│   │   └── apiKeys.ts
+│   ├── reportes.ts  fuentes.ts  zonas.ts  riesgo.ts
+│   ├── usuarios.ts  alertas.ts  apiKeys.ts
+│   └── seed.ts                    <span class="c">catálogo de zonas</span>
+│
+├── src/
+│   ├── proxy.ts                   <span class="w">⚠ en Next 16 es proxy, NO middleware</span>
+│   ├── app/
+│   │   ├── layout.tsx             <span class="c">ClerkProvider + ConvexProviderWithClerk</span>
+│   │   ├── page.tsx               <span class="c">landing: mapa + CTA reportar</span>
+│   │   ├── manifest.ts            <span class="c">PWA</span>
+│   │   ├── (publico)/
+│   │   │   ├── reportar/
+│   │   │   │   ├── page.tsx
+│   │   │   │   ├── _components/   <span class="c">_ = privada, fuera del routing</span>
+│   │   │   │   └── gracias/page.tsx
+│   │   │   └── mapa/page.tsx
+│   │   ├── (auth)/
+│   │   │   ├── ingresar/[[...rest]]/page.tsx
+│   │   │   ├── registrarse/[[...rest]]/page.tsx
+│   │   │   └── onboarding/page.tsx
+│   │   ├── (app)/                 <span class="c">requiere sesión</span>
+│   │   │   ├── layout.tsx         <span class="c">shell + guard de rol</span>
+│   │   │   ├── mis-reportes/  tablero/  fuentes/  api-keys/  admin/
+│   │   └── api/
+│   │       └── exportar/reportes/route.ts   <span class="c">CSV, auth por sesión</span>
+│   ├── components/
+│   │   ├── ui/
+│   │   ├── mapa/                  <span class="c">MapaBase · CapaRiesgo · CapaEmergencia</span>
+│   │   │                          <span class="c">CapaFuentes · SelectorPunto</span>
+│   │   └── EstadoConexion.tsx
+│   ├── lib/
+│   │   ├── colaOffline.ts         <span class="c">IndexedDB nativo, ~60 líneas</span>
+│   │   ├── csv.ts  formato.ts
+│   └── hooks/
+│
+└── public/
+    ├── sw.js                      <span class="c">shell + tiles</span>
+    └── tiles/el-salvador.pmtiles  <span class="w">no en git — bucket o Git LFS</span></pre>
+
+  <h3>Las tres cosas que hay que saber de Next 16</h3>
+  <div class="tabla-env">
+    <table>
+      <thead><tr><th>Cambio</th><th>Qué significa aquí</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>middleware</code> → <code>proxy</code></td>
+          <td>El archivo se llama <code>src/proxy.ts</code> y va al mismo nivel que <code>app/</code>. El runtime es <code>nodejs</code> y no es configurable: <code>edge</code> no está soportado.</td>
+        </tr>
+        <tr>
+          <td><code>params</code> y <code>searchParams</code> son <code>Promise</code></td>
+          <td>Se esperan con <code>await</code>. Los filtros de fecha del tablero viven en la URL, así que esto toca directamente al mapa. <code>npx next typegen</code> genera <code>PageProps&lt;'/ruta'&gt;</code>.</td>
+        </tr>
+        <tr>
+          <td><code>experimental.useOffline</code></td>
+          <td>Next reintenta solo las navegaciones RSC y las Server Actions cuando vuelve la red. El hook <code>useOffline()</code> alimenta el banner de conexión y es más fiable que <code>navigator.onLine</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══ ETAPAS ═══════════════════════════════════════════════════════════════ -->
+<section id="etapas">
+  <div class="rotulo">Plan · 20 días hábiles</div>
+  <h2>Etapas del desarrollo</h2>
+  <p>
+    Están numeradas porque el orden importa: cada una deja funcionando algo que la siguiente
+    necesita. La regla es que al final de cualquier etapa haya algo que se pueda demostrar.
+  </p>
+
+  <div class="etapas">
+    <div class="etapa">
+      <div class="num">0<small>DÍA 1–2</small></div>
+      <div>
+        <h4>Cimientos</h4>
+        <p>Convex conectado, esquema completo, Clerk con su JWT template, <code>proxy.ts</code>, catálogo de zonas sembrado y deploy de preview.</p>
+        <p class="listo"><b>Listo cuando</b> — alguien se registra y aparece su fila en <code>usuarios</code>.</p>
+      </div>
+    </div>
+    <div class="etapa">
+      <div class="num">1<small>DÍA 3–7</small></div>
+      <div>
+        <h4>Reporte de escasez, extremo a extremo</h4>
+        <p>El algoritmo de riesgo con sus asserts, la mutation <code>crear</code> idempotente, el formulario multipaso y la búsqueda de fuentes cercanas. Se construye <strong>como invitado</strong>: ese es el camino crítico del requisito.</p>
+        <p class="listo"><b>Listo cuando</b> — un invitado reporta desde el móvil y recibe los suministradores más cercanos.</p>
+      </div>
+    </div>
+    <div class="etapa">
+      <div class="num">2<small>DÍA 8–12</small></div>
+      <div>
+        <h4>Mapas</h4>
+        <p>MapLibre sobre PMTiles con tres capas: heatmap de riesgo ponderado por el peso decaído, zonas en alerta y fuentes de suministro. Filtros de fecha en la URL, y el cron que cierra alertas.</p>
+        <p class="listo"><b>Listo cuando</b> — los reportes de la etapa 1 se ven como calor y un distrito muestra su badge de emergencia.</p>
+      </div>
+    </div>
+    <div class="etapa">
+      <div class="num">3<small>DÍA 13–16</small></div>
+      <div>
+        <h4>Suministradores y roles</h4>
+        <p>Onboarding con selección de rol, alta de fuente con consentimiento explícito del teléfono, gestión de disponibilidad, historial de reportes y guard de rol en cada función.</p>
+        <p class="listo"><b>Listo cuando</b> — una fuente recién publicada aparece en el resultado de la etapa 1. El ciclo se cierra.</p>
+      </div>
+    </div>
+    <div class="etapa">
+      <div class="num">4<small>DÍA 17–19</small></div>
+      <div>
+        <h4>Offline</h4>
+        <p>Primero la mitad barata (<code>useOffline</code>, banner, manifest) que se hace siempre. Después la cara: cola en IndexedDB, vaciado automático y service worker. <strong>Esta segunda mitad es lo que se recorta si vas tarde.</strong></p>
+        <p class="listo"><b>Listo cuando</b> — se envía un reporte en modo avión y aparece una sola vez al volver la señal.</p>
+      </div>
+    </div>
+    <div class="etapa">
+      <div class="num">5<small>DÍA 20</small></div>
+      <div>
+        <h4>Pulido y demo</h4>
+        <p>Accesibilidad del formulario, textos revisados por alguien de El Salvador, datos sembrados con fechas escalonadas para que el decaimiento se vea, y el guion de cinco minutos.</p>
+        <p class="listo"><b>Listo cuando</b> — la demo corre de principio a fin sin que nadie toque la consola.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="archivos">
+    <div class="archivo">
+      <div class="ruta">docs/roadmap.md</div>
+      <p>Las etapas con lo que entra y lo que queda fuera del MVP, y el orden de la evolución posterior.</p>
+    </div>
+    <div class="archivo">
+      <div class="ruta">docs/roadmap-detallado.md</div>
+      <p>Tarea por tarea, separado en frontend y backend, con las firmas que desbloquean cada pantalla.</p>
+    </div>
+    <div class="archivo">
+      <div class="ruta">docs/modelo-datos.md</div>
+      <p>Cada tabla campo por campo, con tipos de Convex, índices y el algoritmo completo.</p>
+    </div>
+    <div class="archivo">
+      <div class="ruta">docs/estructura-carpetas.md</div>
+      <p>El árbol comentado y las decisiones de organización, con el detalle de <code>proxy.ts</code>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ POR VERIFICAR ════════════════════════════════════════════════════════ -->
+<section id="verificar">
+  <div class="rotulo">Lo que este documento no puede garantizar</div>
+  <h2>Cuatro cosas que hay que comprobar antes de confiar en el plan</h2>
+  <p>
+    Nada de esto está resuelto por escribirlo aquí. Son las dependencias reales del proyecto,
+    en el orden en que conviene atacarlas.
+  </p>
+
+  <ul class="riesgos">
+    <li>
+      <span class="cuando">Día 1</span>
+      <p><b>Clerk sobre <code>proxy.ts</code>.</b> Es la única pieza donde Next 16 y Clerk pueden no haberse encontrado todavía. Next deprecó el named export <code>middleware</code> pero sigue aceptando el default, así que <code>export default clerkMiddleware()</code> debería funcionar — compruébalo el primer día, no el día quince. Si falla, la salida es envolverlo en una función <code>proxy</code>.</p>
+    </li>
+    <li>
+      <span class="cuando">Antes del día 1</span>
+      <p><b>El catálogo de zonas.</b> Sin <code>zonas</code> no hay <code>distritoId</code>, y sin <code>distritoId</code> no hay reporte. La reorganización territorial vigente agrupa los antiguos municipios en 44 municipios y los convierte en distritos, sobre 14 departamentos — pero contrasta el seed contra la fuente oficial (ISDEM / DIGESTYC) en vez de darlo por bueno desde aquí. Es la dependencia externa del proyecto.</p>
+    </li>
+    <li>
+      <span class="cuando">Etapa 2</span>
+      <p><b>El peso del <code>.pmtiles</code>.</b> Un extracto de El Salvador ronda las decenas de MB. Mide antes de decidir si se auto-hospeda, si se sirve desde un bucket con <code>Range</code>, o si para la demo basta el estilo público de Protomaps. También decide si el service worker de la etapa 4 puede cachearlo.</p>
+    </li>
+    <li>
+      <span class="cuando">Etapa 4</span>
+      <p><b>La idempotencia, de verdad.</b> Llamar a <code>reportes.crear</code> dos veces con la misma clave debe dejar <strong>una</strong> fila y devolver el mismo <code>_id</code>. Es la única prueba de toda la etapa offline que realmente importa: si falla, la cola duplica reportes y el mapa exagera la escasez justo donde la gente confía en él.</p>
+    </li>
+  </ul>
+</section>
+
+</main>
+
+<footer class="pie">
+  <div class="env">
+    <p>aguaSOS · documento de arquitectura · rama <code>arquitectura</code></p>
+  </div>
+</footer>
