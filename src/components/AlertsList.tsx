@@ -1,20 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import {
   STATUS_LABEL,
   emergencyLabel,
   formatDate,
-  getAllReports,
+  leerReportesCliente,
+  leerReportesServidor,
+  suscribirReportes,
   type WaterReport,
 } from "@/lib/reports";
 
 export function AlertsList() {
-  const [reports, setReports] = useState<WaterReport[]>([]);
-
-  useEffect(() => {
-    setReports(getAllReports());
-  }, []);
+  const reports = useSyncExternalStore(
+    suscribirReportes,
+    leerReportesCliente,
+    leerReportesServidor,
+  );
 
   if (reports.length === 0) {
     return (

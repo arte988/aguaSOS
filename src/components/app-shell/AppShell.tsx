@@ -17,7 +17,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isMapRoute = pathname === "/mapa" || pathname.startsWith("/mapa/");
 
   return (
-    <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
+    <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background text-foreground">
       <header className="z-20 flex h-14 shrink-0 items-center border-b border-sky-200/80 bg-sky-50 px-4 dark:border-zinc-800 dark:bg-zinc-950">
         <Link href="/" className="text-sm font-semibold tracking-tight text-sky-800 dark:text-sky-300">
           aguaSOS

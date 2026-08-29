@@ -95,6 +95,7 @@ export function getStoredReports(): WaterReport[] {
 export function saveReport(report: WaterReport) {
   const reports = [report, ...getStoredReports()];
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
+  emitirReportes();
   return report;
 }
 
@@ -104,14 +105,35 @@ export function getAllReports(): WaterReport[] {
   );
 }
 
-export function findReport(code: string) {
-  const normalized = code.trim().toUpperCase();
-  return getAllReports().find((report) => report.code.toUpperCase() === normalized);
-}
-
 export function formatDate(iso: string) {
   return new Intl.DateTimeFormat("es", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(iso));
+}
+
+// Almacén para que las vistas vivas (AlertsList) reaccionen a cambios.
+const listeners = new Set<() => void>();
+let cacheReportes: WaterReport[] | null = null;
+
+function emitirReportes() {
+  listeners.forEach((listener) => listener());
+}
+
+export function suscribirReportes(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+export function leerReportesCliente(): WaterReport[] {
+  // ponytail: caché por sesión; si otra pestaña escribe reportes, queda obsoleta.
+  // Subir: escuchar el evento `storage` e invalidar la caché.
+  cacheReportes ??= getAllReports();
+  return cacheReportes;
+}
+
+export function leerReportesServidor(): WaterReport[] {
+  return getAllReports();
 }

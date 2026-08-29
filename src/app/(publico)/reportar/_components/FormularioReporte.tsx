@@ -23,7 +23,7 @@ function mapearAfectacion(texto: string): Afectacion[] {
 }
 
 const inputClase =
-  "min-h-11 w-full rounded-xl border border-sky-200 bg-white px-3 text-base text-sky-950 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 dark:border-sky-800 dark:bg-zinc-900 dark:text-sky-50";
+  "min-h-11 w-full rounded-xl border border-sky-200 bg-white px-3 text-base text-sky-950 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 dark:border-sky-800 dark:bg-zinc-900 dark:text-sky-50";
 
 export function FormularioReporte() {
   const router = useRouter();
@@ -121,7 +121,7 @@ export function FormularioReporte() {
                 role="radio"
                 aria-checked={seleccionado}
                 onClick={() => parchearBorrador({ personasRango: rango.valor })}
-                className={`min-h-11 min-w-11 rounded-full px-4 text-base font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 ${
+                className={`min-h-11 min-w-11 rounded-full px-4 text-base font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 ${
                   seleccionado
                     ? "bg-sky-800 text-white dark:bg-sky-500"
                     : "border border-sky-200 bg-white text-sky-900 dark:border-sky-800 dark:bg-zinc-900 dark:text-sky-100"
@@ -167,7 +167,7 @@ export function FormularioReporte() {
                 type="button"
                 aria-pressed={seleccionado}
                 onClick={() => parchearBorrador({ impacto: opcion.valor })}
-                className={`min-h-11 rounded-2xl px-4 py-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 ${
+                className={`min-h-11 rounded-2xl px-4 py-3 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 ${
                   seleccionado
                     ? "bg-sky-800 text-white dark:bg-sky-500"
                     : "border border-sky-200 bg-white text-sky-950 dark:border-sky-800 dark:bg-zinc-900 dark:text-sky-50"

@@ -93,7 +93,7 @@ export function TableroCartografico() {
                 type="button"
                 aria-pressed={capas[capa]}
                 onClick={() => alternarCapa(capa)}
-                className={`min-h-11 rounded-full border px-4 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 ${
+                className={`min-h-11 rounded-full border px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 ${
                   capas[capa]
                     ? "border-sky-700 bg-sky-800 text-white"
                     : "border-sky-200 bg-white text-sky-900"
@@ -112,7 +112,7 @@ export function TableroCartografico() {
         ) : null}
       </header>
 
-      <div className="h-[calc(100dvh-20rem)] min-h-[28rem] w-full">
+      <div className="h-[calc(100dvh-20rem)] min-h-112 w-full">
         <MapaBase ariaLabel="Tablero analítico de aguaSOS" center={MAP_CENTER} initialZoom={8} onViewportChange={setBbox}>
           {capas.riesgo ? <CapaRiesgo data={state.collections.risk} /> : null}
           {capas.emergencia ? <CapaEmergencia data={state.collections.emergencies} /> : null}

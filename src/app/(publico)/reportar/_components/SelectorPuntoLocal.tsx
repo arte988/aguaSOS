@@ -86,7 +86,7 @@ export function SelectorPuntoLocal({ valor, onChange }: SelectorPuntoLocalProps)
             required
             value={valor && Number.isFinite(valor.lat) ? valor.lat : ""}
             onChange={(e) => aplicarManual("lat", e.target.value)}
-            className="min-h-11 w-full rounded-xl border border-sky-200 bg-white px-3 text-base text-sky-950 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 dark:border-sky-800 dark:bg-zinc-900 dark:text-sky-50"
+            className="min-h-11 w-full rounded-xl border border-sky-200 bg-white px-3 text-base text-sky-950 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 dark:border-sky-800 dark:bg-zinc-900 dark:text-sky-50"
           />
         </Campo>
         <Campo id="lng" label="Longitud">
@@ -99,7 +99,7 @@ export function SelectorPuntoLocal({ valor, onChange }: SelectorPuntoLocalProps)
             required
             value={valor && Number.isFinite(valor.lng) ? valor.lng : ""}
             onChange={(e) => aplicarManual("lng", e.target.value)}
-            className="min-h-11 w-full rounded-xl border border-sky-200 bg-white px-3 text-base text-sky-950 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-700 dark:border-sky-800 dark:bg-zinc-900 dark:text-sky-50"
+            className="min-h-11 w-full rounded-xl border border-sky-200 bg-white px-3 text-base text-sky-950 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 dark:border-sky-800 dark:bg-zinc-900 dark:text-sky-50"
           />
         </Campo>
       </div>

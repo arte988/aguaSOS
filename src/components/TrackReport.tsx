@@ -1,12 +1,13 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   emergencyLabel,
-  findReport,
   formatDate,
-  type WaterReport,
+  leerReportesCliente,
+  leerReportesServidor,
+  suscribirReportes,
 } from "@/lib/reports";
 import { StatusBadge } from "@/components/AlertsList";
 
@@ -14,21 +15,22 @@ export function TrackReport() {
   const searchParams = useSearchParams();
   const initialCode = searchParams.get("codigo") ?? "";
   const [code, setCode] = useState(initialCode);
-  const [report, setReport] = useState<WaterReport | null>(null);
-  const [searched, setSearched] = useState(false);
+  const [consultado, setConsultado] = useState(false);
+  const reports = useSyncExternalStore(
+    suscribirReportes,
+    leerReportesCliente,
+    leerReportesServidor,
+  );
 
-  useEffect(() => {
-    if (!initialCode) return;
-    const found = findReport(initialCode);
-    setReport(found ?? null);
-    setSearched(true);
-    setCode(initialCode);
-  }, [initialCode]);
+  const busqueda = consultado ? code : initialCode;
+  const report = busqueda
+    ? (reports.find((r) => r.code.toUpperCase() === busqueda.trim().toUpperCase()) ?? null)
+    : null;
+  const buscado = consultado || initialCode !== "";
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setReport(findReport(code) ?? null);
-    setSearched(true);
+    setConsultado(true);
   }
 
   return (
@@ -59,7 +61,7 @@ export function TrackReport() {
         </button>
       </form>
 
-      {searched && report ? (
+      {buscado && report ? (
         <article className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -80,7 +82,7 @@ export function TrackReport() {
         </article>
       ) : null}
 
-      {searched && !report ? (
+      {buscado && !report ? (
         <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">
           No encontramos un reporte con ese código. Revisa que esté bien escrito.
         </p>

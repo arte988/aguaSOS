@@ -53,7 +53,7 @@ export function FuentesCercanas({ lat, lng }: FuentesCercanasProps) {
             </p>
             <a
               href={telefonoHref(fuente.contactoTelefono)}
-              className="mt-3 inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl bg-sky-800 px-4 text-base font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 dark:bg-sky-600"
+              className="mt-3 inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl bg-sky-800 px-4 text-base font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 dark:bg-sky-600"
             >
               Llamar {fuente.contactoTelefono}
             </a>
