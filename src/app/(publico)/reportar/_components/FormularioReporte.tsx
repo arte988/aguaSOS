@@ -147,6 +147,7 @@ export function FormularioReporte() {
           min={0}
           step={1}
           required
+          aria-describedby="menores-pista"
           value={borrador.menores}
           onChange={(e) => parchearBorrador({ menores: e.target.value })}
           className={inputClase}
@@ -207,6 +208,7 @@ export function FormularioReporte() {
           name="canton"
           type="text"
           autoComplete="address-level3"
+          aria-describedby="canton-pista"
           value={borrador.canton}
           onChange={(e) => parchearBorrador({ canton: e.target.value })}
           className={inputClase}
@@ -222,6 +224,7 @@ export function FormularioReporte() {
           id="afectacion"
           name="afectacion"
           rows={3}
+          aria-describedby="afectacion-pista"
           value={borrador.afectacion}
           onChange={(e) => parchearBorrador({ afectacion: e.target.value })}
           className={`${inputClase} py-2`}
