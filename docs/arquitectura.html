@@ -338,6 +338,7 @@ pre .w  { color: var(--vigilancia); font-weight: 500; }
       <li><a href="#datos">Modelo de datos</a></li>
       <li><a href="#carpetas">Carpetas</a></li>
       <li><a href="#etapas">Etapas</a></li>
+      <li><a href="#equipo">Reparto</a></li>
       <li><a href="#verificar">Por verificar</a></li>
     </ul>
   </div>
@@ -1016,7 +1017,151 @@ riesgoZona   = Σ peso(t)                              <span class="c">// aquí 
       <div class="ruta">docs/estructura-carpetas.md</div>
       <p>El árbol comentado y las decisiones de organización, con el detalle de <code>proxy.ts</code>.</p>
     </div>
+    <div class="archivo">
+      <div class="ruta">docs/reparto-equipo.md</div>
+      <p>El reparto entre cinco personas con la propiedad de cada fichero y el calendario en paralelo.</p>
+    </div>
   </div>
+</section>
+
+<!-- ══ EQUIPO ═══════════════════════════════════════════════════════════════ -->
+<section id="equipo">
+  <div class="rotulo">Reparto · cinco personas, cinco territorios</div>
+  <h2>Cómo se paraleliza sin pisarse</h2>
+  <p>
+    Dos plazas ya están tomadas: una persona en <strong>Clerk</strong> y otra en
+    <strong>Convex</strong>. Las tres restantes se reparten el frontend y la PWA — pero
+    <strong>no por feature, por fichero</strong>. Dos personas con features distintas que
+    editan el mismo <code>layout.tsx</code> chocan igual.
+  </p>
+
+  <div class="nota">
+    <span class="etiqueta">La regla</span>
+    <p>
+      Un fichero, un dueño. Un componente, un fichero. Si necesitás tocar algo que no es tuyo,
+      no lo tocás: pedís la firma. Con eso un conflicto de git es estructuralmente improbable,
+      y cuando aparece uno <strong>es la señal de que alguien entró en territorio ajeno</strong> —
+      no se resuelve el conflicto, se revierte.
+    </p>
+  </div>
+
+  <div class="decisiones">
+    <div class="decision">
+      <div class="clave">Vía 1</div>
+      <h4>Captura</h4>
+      <p>El formulario multipaso, la pantalla de confirmación, la cola offline en IndexedDB, el service worker y el manifest.</p>
+      <p><code>(publico)/reportar/**</code> · <code>lib/colaOffline.ts</code> · <code>EstadoConexion.tsx</code> · <code>public/sw.js</code> · <code>next.config.ts</code></p>
+      <p>El formulario y la cola van juntos <b>a propósito</b>: la cola existe para el formulario, y separarlos obliga a negociar el traspaso de la <code>claveIdempotencia</code> a través de una frontera de equipo — justo donde se rompe y el mapa duplica reportes.</p>
+    </div>
+    <div class="decision">
+      <div class="clave">Vía 2</div>
+      <h4>Cartografía</h4>
+      <p>MapLibre, las tres capas, el selector de punto, los filtros de fecha y el pipeline de tiles.</p>
+      <p><code>components/mapa/**</code> · <code>(publico)/mapa/**</code> · <code>(app)/tablero/**</code> · <code>public/tiles/**</code></p>
+      <p>Es una habilidad autocontenida y el bundle más pesado de la aplicación: un solo dueño, un solo sitio.</p>
+    </div>
+    <div class="decision">
+      <div class="clave">Vía 3</div>
+      <h4>Cuentas y shell</h4>
+      <p>Onboarding, guard de rol, navegación, historial de reportes, alta y gestión de fuentes, admin, y las primitivas visuales.</p>
+      <p><code>(auth)/**</code> · <code>(app)/layout.tsx</code> · <code>(app)/mis-reportes/**</code> · <code>(app)/fuentes/**</code> · <code>components/ui/**</code></p>
+      <p>Frontera con la plaza de Auth: esa persona posee la <b>configuración</b> de Clerk; la Vía 3 posee las <b>pantallas</b> que hay detrás.</p>
+    </div>
+  </div>
+
+  <h3>Ficheros compartidos: dueño y fecha de congelación</h3>
+  <p>Son los únicos puntos donde dos personas podrían chocar de verdad.</p>
+  <div class="tabla-env">
+    <table>
+      <thead><tr><th>Fichero</th><th>Dueño</th><th>Regla</th></tr></thead>
+      <tbody>
+        <tr><td><code>src/app/layout.tsx</code></td><td>Auth</td><td>Se escribe el día 1 con los providers y se <b>congela</b></td></tr>
+        <tr><td><code>src/proxy.ts</code></td><td>Auth</td><td>Nadie más lo abre</td></tr>
+        <tr><td><code>convex/**</code></td><td>Convex</td><td>Las vías solo importan el <code>api</code> generado</td></tr>
+        <tr><td><code>tsconfig.json</code></td><td>Convex</td><td>Añade el alias <code>@convex/*</code> el día 1</td></tr>
+        <tr><td><code>package.json</code></td><td>Vía 3 coordina</td><td>Todas las dependencias en un solo commit el día 1</td></tr>
+        <tr><td><code>next.config.ts</code></td><td>Vía 1</td><td>Un único edit en todo el proyecto: <code>experimental.useOffline</code></td></tr>
+        <tr><td><code>src/app/globals.css</code></td><td>Vía 3</td><td>Tokens el día 1–2, congelado después</td></tr>
+        <tr><td><code>public/sw.js</code></td><td>Vía 1</td><td>Vía 2 no lo edita nunca — ver abajo</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Los contratos del día 1</h3>
+  <p>
+    Lo único que puede dejar a alguien parado. Todo tiene que existir —aunque sea vacío—
+    antes de que termine el día 2. Es el mismo patrón en las cinco plazas:
+    <strong>la firma primero, el cuerpo después</strong>.
+  </p>
+  <div class="tabla-env">
+    <table>
+      <thead><tr><th>Contrato</th><th>Lo publica</th><th>Día</th></tr></thead>
+      <tbody>
+        <tr><td>Firmas vacías (<code>return null</code>) de todas las queries y mutations</td><td>Convex</td><td>1</td></tr>
+        <tr><td><code>convex/model/constantes.ts</code> — enums, rangos, niveles de impacto</td><td>Convex</td><td>1</td></tr>
+        <tr><td><code>layout.tsx</code> con <code>ClerkProvider</code> + <code>ConvexProviderWithClerk</code></td><td>Auth</td><td>1</td></tr>
+        <tr><td><code>proxy.ts</code> funcionando con Clerk</td><td>Auth</td><td>1–2</td></tr>
+        <tr><td><code>&lt;SelectorPunto&gt;</code> con su firma final y cuerpo stub</td><td>Vía 2</td><td>1</td></tr>
+        <tr><td>Tokens de Tailwind + <code>Boton</code>, <code>Campo</code>, <code>Chip</code></td><td>Vía 3</td><td>2</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    <code>SelectorPunto</code> es el contrato más consumido — lo necesitan la Vía 1 para el paso
+    de ubicación y la Vía 3 para el alta de fuente:
+  </p>
+
+<pre><span class="c">// src/components/mapa/SelectorPunto.tsx — dueño: Vía 2</span>
+<span class="k">export function</span> SelectorPunto(props: {
+  valor: Punto | <span class="k">null</span>;
+  onChange: (p: Punto &amp; { precisionM?: number }) =&gt; <span class="k">void</span>;
+  centroInicial?: Punto;
+}): React.ReactNode;</pre>
+
+  <p>
+    Vías 1 y 3 escriben contra esa firma desde el día 1. Vía 2 le pone el mapa el día 3.
+  </p>
+
+  <h3>El único choque real del plan</h3>
+  <div class="nota alerta">
+    <span class="etiqueta">Semana 4</span>
+    <p>
+      En la etapa offline, Vía 1 escribe <code>public/sw.js</code> y Vía 2 quiere que ese
+      service worker cachee los tiles. Es el único punto donde dos vías necesitan el mismo
+      fichero.
+    </p>
+    <p>
+      <strong>Resolución:</strong> <code>sw.js</code> es de Vía 1, sin excepciones. Vía 2 expone
+      un array <code>URLS_A_CACHEAR</code> desde <code>components/mapa/tiles.ts</code> y Vía 1 lo
+      importa. Vía 2 nunca abre el service worker.
+    </p>
+  </div>
+
+  <h3>Quién define qué</h3>
+  <p>
+    Los choques semánticos duelen más que los de git: dos formateadores de fecha distintos no
+    dan conflicto en el merge, dan un bug en la demo.
+  </p>
+  <div class="tabla-env">
+    <table>
+      <thead><tr><th>Concepto</th><th>Lo define</th><th>Los demás</th></tr></thead>
+      <tbody>
+        <tr><td>El tipo <code>Punto { lat, lng }</code></td><td>Vía 2 · <code>mapa/tipos.ts</code></td><td>importan</td></tr>
+        <tr><td>Color de cada nivel de riesgo</td><td>Vía 2 · <code>mapa/tipos.ts</code></td><td>Vía 3 lo usa en el badge</td></tr>
+        <tr><td>Fechas y números en es-SV</td><td>Vía 3 · <code>lib/formato.ts</code></td><td>importan</td></tr>
+        <tr><td>Rangos de personas, tipos de suministro</td><td>Convex · <code>model/constantes.ts</code></td><td>los tres importan</td></tr>
+        <tr><td>Peso decaído de un reporte</td><td>Convex · <code>model/riesgo.ts</code></td><td>Vía 2 lo pinta, Vía 3 lo muestra</td></tr>
+        <tr><td>Copys en español</td><td>Vía 3</td><td>los tres proponen, Vía 3 unifica</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    El calendario día a día de las cinco columnas avanzando en paralelo está en
+    <code>docs/reparto-equipo.md</code>, junto con qué hacer si la Vía 3 —la más ligera de las
+    tres— termina antes.
+  </p>
 </section>
 
 <!-- ══ POR VERIFICAR ════════════════════════════════════════════════════════ -->
