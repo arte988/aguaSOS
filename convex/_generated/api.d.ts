@@ -8,7 +8,12 @@
  * @module
  */
 
+import type * as catalogo_zonasCatalogo from "../catalogo/zonasCatalogo.js";
 import type * as health from "../health.js";
+import type * as lib_auth from "../lib/auth.js";
+import type * as lib_literals from "../lib/literals.js";
+import type * as usuarios from "../usuarios.js";
+import type * as zonas from "../zonas.js";
 
 import type {
   ApiFromModules,
@@ -17,7 +22,12 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "catalogo/zonasCatalogo": typeof catalogo_zonasCatalogo;
   health: typeof health;
+  "lib/auth": typeof lib_auth;
+  "lib/literals": typeof lib_literals;
+  usuarios: typeof usuarios;
+  zonas: typeof zonas;
 }>;
 
 /**
