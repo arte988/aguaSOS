@@ -72,9 +72,13 @@ function extraerResultadoCrear(resultado: unknown): ResultadoCrear {
 
 export async function crearReporteEnConvex(
   datos: DatosReporte,
-): Promise<ResultadoCrear | null> {
+): Promise<ResultadoCrear> {
   const cliente = await obtenerCliente();
-  if (!cliente) return null;
+  if (!cliente) {
+    throw new Error(
+      "El servicio de reportes no está configurado. Falta NEXT_PUBLIC_CONVEX_URL.",
+    );
+  }
 
   const resultado = await cliente.mutation("reportes:crear", {
     claveIdempotencia: datos.claveIdempotencia,
