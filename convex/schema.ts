@@ -50,7 +50,7 @@ export default defineSchema({
     lat: v.number(),
     lng: v.number(),
     precisionM: v.optional(v.number()),
-    distritoId: v.id("zonas"),
+    distritoId: v.optional(v.id("zonas")),
     canton: v.optional(v.string()),
     personasRango: personasRangoValidator,
     personasEst: v.number(),
