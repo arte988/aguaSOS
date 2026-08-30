@@ -4,14 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import {
   Map,
   Marker,
+  setWorkerUrl,
   type MapMouseEvent,
   type Map as MapLibreMap,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
-// maplibre-gl 6 embebe el worker en el bundle principal (blob URL). No llamar
-// setWorkerUrl salvo que exista una copia en /public — el script predev ya no
-// genera maplibre-gl-worker.mjs en esta versión.
+// MapLibre 6 puede crear el worker como blob URL; en Next/Turbopack eso
+// deja el estilo a medias y el overlay "Cargando mapa…" nunca se quita.
+// Los .mjs en /public los copia `scripts/copy-maplibre-worker.mjs` (predev).
+if (typeof window !== "undefined") {
+  setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
+}
 import { MAP_BOUNDS, MAP_CENTER, MAP_INITIAL_ZOOM, MAP_MAX_ZOOM, MAP_MIN_ZOOM, OPENFREEMAP_STYLE_URL } from "./tiles";
 import type { MapaBaseProps } from "./mapa-contrato";
 import { MapRuntimeProvider, getGeoJsonSource, useMapRuntime, type MapRuntime, type MapStatus } from "./mapa-contexto";
@@ -113,14 +117,21 @@ function MapInstance({
 
     instance.on("load", handleLoad);
     instance.on("styledata", handleStyleData);
+    instance.on("idle", handleLoad);
     instance.on("moveend", handleMoveEnd);
     instance.on("click", handleMapClick);
     instance.on("error", handleError);
+    // `load` / `styledata` pueden haber ocurrido durante el constructor
+    // (estilo en caché o red rápida). Sin este chequeo el overlay se queda.
+    if (instance.loaded() || instance.isStyleLoaded()) {
+      marcarListo();
+    }
     setMap(instance);
 
     return () => {
       instance.off("load", handleLoad);
       instance.off("styledata", handleStyleData);
+      instance.off("idle", handleLoad);
       instance.off("moveend", handleMoveEnd);
       instance.off("click", handleMapClick);
       instance.off("error", handleError);
