@@ -4,18 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import {
   Map,
   Marker,
+  setWorkerUrl,
   type MapMouseEvent,
   type Map as MapLibreMap,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
-// maplibre-gl 6 embebe el worker en el bundle principal (blob URL). No llamar
-// setWorkerUrl salvo que exista una copia en /public — el script predev ya no
-// genera maplibre-gl-worker.mjs en esta versión.
 import { MAP_BOUNDS, MAP_CENTER, MAP_INITIAL_ZOOM, MAP_MAX_ZOOM, MAP_MIN_ZOOM, OPENFREEMAP_STYLE_URL } from "./tiles";
 import type { MapaBaseProps } from "./mapa-contrato";
 import { MapRuntimeProvider, getGeoJsonSource, useMapRuntime, type MapRuntime, type MapStatus } from "./mapa-contexto";
 import type { BoundingBox, Punto } from "./tipos";
+
+setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
 export function MapCanvas(props: MapaBaseProps) {
   const [attempt, setAttempt] = useState(0);

@@ -67,9 +67,7 @@ async function resolverDistritoFinal(
     return zona;
   }
 
-  if (!porPunto.distritoId) {
-    throw new Error(porPunto.motivo);
-  }
+  if (!porPunto.distritoId) return null;
 
   return await cargarDistrito(ctx, porPunto.distritoId);
 }
@@ -97,10 +95,12 @@ export const crear = mutation({
       .unique();
 
     if (existente) {
-      const distrito = await cargarDistrito(ctx, existente.distritoId);
+      const distrito = existente.distritoId
+        ? await cargarDistrito(ctx, existente.distritoId)
+        : null;
       return {
         reporteId: existente._id,
-        distrito: { nombre: distrito.nombre },
+        ...(distrito ? { distrito: { nombre: distrito.nombre } } : {}),
         fuentesCercanas: [],
       };
     }
@@ -121,7 +121,9 @@ export const crear = mutation({
       lat: args.lat,
       lng: args.lng,
       ...(args.precisionM !== undefined ? { precisionM: args.precisionM } : {}),
-      distritoId: distrito._id,
+      // ponytail: sin geometrías oficiales guardamos el punto sin distrito;
+      // cuando exista el catálogo, se rellena distritoId y se recalcula el riesgo.
+      ...(distrito ? { distritoId: distrito._id } : {}),
       ...(args.canton ? { canton: args.canton.trim() } : {}),
       personasRango: args.personasRango,
       personasEst,
@@ -132,11 +134,13 @@ export const crear = mutation({
       estado: "publicado",
     });
 
-    await recalcularRiesgoZona(ctx, distrito._id, ahora);
+    if (distrito) {
+      await recalcularRiesgoZona(ctx, distrito._id, ahora);
+    }
 
     return {
       reporteId,
-      distrito: { nombre: distrito.nombre },
+      ...(distrito ? { distrito: { nombre: distrito.nombre } } : {}),
       fuentesCercanas: [],
     };
   },
@@ -157,7 +161,7 @@ export const obtener = query({
       lat: v.number(),
       lng: v.number(),
       precisionM: v.optional(v.number()),
-      distritoId: v.id("zonas"),
+      distritoId: v.optional(v.id("zonas")),
       canton: v.optional(v.string()),
       personasRango: personasRangoValidator,
       personasEst: v.number(),
